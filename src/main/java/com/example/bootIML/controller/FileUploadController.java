@@ -70,7 +70,7 @@ public class FileUploadController {
 
         Path path = Paths.get(srcCode );
         try {
-            ArrayFilFiles.filFiles = (ArrayList) Files.readAllLines(path, StandardCharsets.UTF_8);
+            ArrayFilFiles.filFiles.addAll((ArrayList) Files.readAllLines(path, StandardCharsets.UTF_8));
          }
         catch (IOException e) {
             e.printStackTrace();

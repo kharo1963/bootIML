@@ -158,6 +158,34 @@ public class Parser {
             else
             	throw new RuntimeException (curr_lex.toString());
         }//end read
+        else if (c_type == Type_of_lex.LEX_GET) {
+            gl();
+            if (c_type == Type_of_lex.LEX_LPAREN) {
+                gl();
+                if (c_type == Type_of_lex.LEX_ID) {
+                    check_id_in_read();
+                    poliz.addElement(new Lex(Type_of_lex.POLIZ_ADDRESS, c_val));
+                    gl();
+                }
+                else
+                    throw new RuntimeException (curr_lex.toString());
+                if (c_type == Type_of_lex.LEX_COMMA) {
+                    c_val = glRestArg();
+                    poliz.addElement(new Lex(Type_of_lex.POLIZ_ADDRESS, c_val));
+                    gl();
+                }
+                else
+                    throw new RuntimeException (curr_lex.toString());
+                if (c_type == Type_of_lex.LEX_RPAREN) {
+                    gl();
+                    poliz.addElement(new Lex(Type_of_lex.LEX_GET));
+                }
+                else
+                    throw new RuntimeException (curr_lex.toString());
+            }
+            else
+                throw new RuntimeException (curr_lex.toString());
+        }//end get
         else if (c_type == Type_of_lex.LEX_WRITE) {
             gl();
             if (c_type == Type_of_lex.LEX_LPAREN) {
@@ -347,6 +375,11 @@ public class Parser {
         System.out.println(c_type);
         System.out.println(c_val);
     }
+    int  glRestArg() {
+        int restArg = scan.getRestArg();
+        return restArg;
+    }
+
     public
     Vector<Lex> poliz = new Vector<Lex>();
      Parser(String program) {
@@ -357,13 +390,14 @@ public class Parser {
         P();
         if (c_type != Type_of_lex.LEX_FIN)
         	throw new RuntimeException (curr_lex.toString());
-        /*
+        /* */
+        System.out.println("poliz");
         for (Lex l : poliz) {
         	System.out.println(l.toString());
         	System.out.println(l.t_lex);
         	System.out.println(l.v_lex);
         }
-        */
+        /* */
         System.out.println();
         System.out.println("Yes!!!");
     }

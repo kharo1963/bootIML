@@ -65,7 +65,7 @@ public class Scanner {
     
     public
     static String TW[] = { "", "and", "begin", "bool", "do", "else", "end", "if", "false", "int", "not", "or", "program",
-        "read", "then", "true", "var", "while", "write"};
+        "read", "then", "true", "var", "while", "write", "get"};
     static String TD[] = { "@", ";", ",", ":", ":=", "(", ")", "=", "<", ">", "+", "-", "*", "/", "<=", "!=", ">="};
    
     Scanner(String program) {
@@ -185,6 +185,22 @@ public class Scanner {
                 else
                 	throw new RuntimeException (String.valueOf('!'));
              } //end switch
+        } while (true);
+    }
+    int getRestArg() {
+        String      buf = "";
+         do {
+            gc();
+            if (c == ')') {
+                System.out.println("getRestArg");
+                System.out.println(buf);
+                ungetc(fp);
+                StatD.restArg.addElement(buf);
+                return StatD.restArg.size() - 1;
+              }
+            else {
+                buf = buf + c;
+            }
         } while (true);
     }
 }

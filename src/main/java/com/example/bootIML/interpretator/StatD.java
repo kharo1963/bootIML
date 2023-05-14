@@ -1,10 +1,17 @@
 package com.example.bootIML.interpretator;
 
+import com.example.bootIML.service.ClientServiceImpl;
+import com.example.bootIML.service.ImlParamServiceImpl;
+
 import java.util.Stack;
 import java.util.Vector;
 
-public class StatD {	
+public class StatD {
+
+	public static ClientServiceImpl clientServiceImpl;
+	public static ImlParamServiceImpl imlParamServiceImpl;
 	static Vector<Ident> TID = new Vector<Ident>();
+	static Vector<String> restArg = new Vector<String>();
 	
 	static int from_st_i(Stack<Integer> st) {
 	    int i = st.peek();
