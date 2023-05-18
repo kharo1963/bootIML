@@ -2,27 +2,13 @@ package com.example.bootIML.controller;
 
 import java.util.List;
 
-import com.example.bootIML.model.Client;
 import com.example.bootIML.model.ImlParam;
 import com.example.bootIML.service.ImlParamService;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.core.io.Resource;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
-import org.springframework.web.servlet.mvc.support.RedirectAttributes;
-
-import com.example.bootIML.service.StorageFileNotFoundException;
-import com.example.bootIML.service.StorageService;
-import com.example.bootIML.interpretator.Interpretator;
-
-import com.example.bootIML.service.ArrayFilFiles;
-
 
 @Controller
 public class ImlParamController {
