@@ -6,6 +6,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -70,7 +71,10 @@ public class FileUploadController {
 
         Path path = Paths.get(srcCode );
         try {
-            ArrayFilFiles.filFiles.addAll((ArrayList) Files.readAllLines(path, StandardCharsets.UTF_8));
+            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            for(String line : lines){
+                ArrayFilFiles.filFiles.add(line + System.lineSeparator());
+            }
          }
         catch (IOException e) {
             e.printStackTrace();
