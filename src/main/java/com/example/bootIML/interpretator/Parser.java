@@ -8,8 +8,8 @@ public class Parser {
     Type_of_lex  c_type;
     int          c_val;
     Scanner      scan;
-    Stack<Integer>       st_int = new Stack<Integer>();
-    Stack<Type_of_lex>   st_lex = new Stack<Type_of_lex>();
+    Stack<Integer>     st_int = new Stack<Integer>();
+    Stack<Type_of_lex> st_lex = new Stack<Type_of_lex>();
     void  P() {
         if (c_type == Type_of_lex.LEX_PROGRAM) {
             gl();
@@ -382,7 +382,7 @@ public class Parser {
 
     public
     Vector<Lex> poliz = new Vector<Lex>();
-     Parser(String program) {
+    Parser(String program) {
          scan = new Scanner(program);
     }
     void  analyze() {
@@ -397,6 +397,7 @@ public class Parser {
         	System.out.println(l.t_lex);
         	System.out.println(l.v_lex);
         }
+        scan.freeResourse();
         /* */
         System.out.println();
         System.out.println("Yes!!!");

@@ -7,6 +7,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -21,14 +22,14 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.multipart.MultipartFile;
-import org.springframework.web.servlet.mvc.method.annotation.MvcUriComponentsBuilder;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.example.bootIML.service.StorageFileNotFoundException;
 import com.example.bootIML.service.StorageService;
-import com.example.bootIML.interpretator.Interpretator;
-
 import com.example.bootIML.service.ArrayFilFiles;
+import com.example.bootIML.interpretator.Ident;
+import com.example.bootIML.interpretator.StatD;
+import com.example.bootIML.interpretator.Interpretator;
 
 @Controller
 public class FileUploadController {
@@ -37,19 +38,13 @@ public class FileUploadController {
 
     @Autowired
     public FileUploadController(StorageService storageService) {
+
         this.storageService = storageService;
     }
 
     @GetMapping("/")
     public String listUploadedFiles(Model model) throws IOException {
 
-        /*
-        model.addAttribute("files", storageService.loadAll().map(
-              path -> MvcUriComponentsBuilder.fromMethodName(FileUploadController.class,
-                              "serveFile", path.getFileName().toString()).build().toUri().toString())
-              .collect(Collectors.toList()));
-
-         */
         return "uploadForm";
     }
 
@@ -66,8 +61,12 @@ public class FileUploadController {
     public String handleFileUpload(@RequestParam("file") MultipartFile file,
                                    RedirectAttributes redirectAttributes) {
 
-        String srcCode = storageService.store(file);
+        StatD.TID = new Vector<Ident>();
+        StatD.restArg = new Vector<String>();
+        ArrayFilFiles.filFiles = new ArrayList();
         ArrayFilFiles.filFiles.add("Исходный код:");
+
+        String srcCode = storageService.store(file);
 
         Path path = Paths.get(srcCode );
         try {

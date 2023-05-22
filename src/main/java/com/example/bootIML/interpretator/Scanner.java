@@ -63,10 +63,9 @@ public class Scanner {
 		return Type_of_lex.LEX_NULL;
     }
     
-    public
-    static String TW[] = { "", "and", "begin", "bool", "do", "else", "end", "if", "false", "int", "not", "or", "program",
+    String TW[] = { "", "and", "begin", "bool", "do", "else", "end", "if", "false", "int", "not", "or", "program",
         "read", "then", "true", "var", "while", "write", "get"};
-    static String TD[] = { "@", ";", ",", ":", ":=", "(", ")", "=", "<", ">", "+", "-", "*", "/", "<=", "!=", ">="};
+    String TD[] = { "@", ";", ",", ":", ":=", "(", ")", "=", "<", ">", "+", "-", "*", "/", "<=", "!=", ">="};
    
     Scanner(String program) {
     	try {
@@ -76,7 +75,16 @@ public class Scanner {
     		throw new RuntimeException ("can’t open file");
     	}    
     }
-    
+
+    void freeResourse () {
+        try {
+            fp.close();
+        }
+        catch (Exception e) {
+            throw new RuntimeException ("can’t close file");
+        }
+    }
+
     void store_pos() {
     	try {
     		pos = fp.getFilePointer();

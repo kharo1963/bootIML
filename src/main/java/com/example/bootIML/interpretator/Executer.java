@@ -90,24 +90,24 @@ public class Executer {
 	            StatD.TID.get(i).put_assign();
 	            break;
 
-				case LEX_GET:
-					int restArgVal;
-					String restArgStr;
-					i = StatD.from_st_i (args);
-					restArgStr = StatD.restArg.get(i);
-					System.out.println("case LEX_GET restArgStr:");
-					System.out.println(restArgStr);
-					String[] readParams = restArgStr.split("/");
-					System.out.println("readParams:");
-					System.out.println(readParams[0]);
-					System.out.println(readParams[1]);
-					restArgVal = StatD.imlParamServiceImpl.readParam(readParams[0],readParams[1]);
-					System.out.println("restArgVal");
-					System.out.println(restArgVal);
-					i = StatD.from_st_i (args);
-					StatD.TID.get(i).put_value(restArgVal);
-					StatD.TID.get(i).put_assign();
-					break;
+			case LEX_GET:
+				int restArgVal;
+				String restArgStr;
+				i = StatD.from_st_i (args);
+				restArgStr = StatD.restArg.get(i);
+				System.out.println("case LEX_GET restArgStr:");
+				System.out.println(restArgStr);
+				String[] readParams = restArgStr.split("/");
+				System.out.println("readParams:");
+				System.out.println(readParams[0]);
+				System.out.println(readParams[1]);
+				restArgVal = StatD.imlParamServiceImpl.readParam(readParams[0],readParams[1]);
+				System.out.println("restArgVal");
+				System.out.println(restArgVal);
+				i = StatD.from_st_i (args);
+				StatD.TID.get(i).put_value(restArgVal);
+				StatD.TID.get(i).put_assign();
+				break;
 
 	        case LEX_PLUS:
 	        	i = StatD.from_st_i (args);
