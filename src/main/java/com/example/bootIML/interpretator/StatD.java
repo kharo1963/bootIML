@@ -2,21 +2,21 @@ package com.example.bootIML.interpretator;
 
 import com.example.bootIML.service.ImlParamServiceImpl;
 
-import java.util.Stack;
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.Deque;
 
 public class StatD {
 
 	public static ImlParamServiceImpl imlParamServiceImpl;
-	public static Vector<Ident> TID;
-	public static Vector<String> restArg;
+	public static ArrayList<Ident> TID;
+	public static ArrayList<String> restArg;
 	
-	static int from_st_i(Stack<Integer> st) {
+	static int from_st_i(Deque<Integer> st) {
 	    int i = st.peek();
 		st.pop();
 	    return i;
 	}
-	static TypeOfLex from_st_t(Stack<TypeOfLex> st) {
+	static TypeOfLex from_st_t(Deque<TypeOfLex> st) {
 		TypeOfLex i = st.peek();
 		st.pop();
 	    return i;

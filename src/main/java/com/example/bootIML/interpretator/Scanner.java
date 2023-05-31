@@ -49,7 +49,7 @@ public class Scanner {
         		return k;
         	++k;
         }
-        StatD.TID.addElement(new Ident(buf));
+        StatD.TID.add(new Ident(buf));
         return StatD.TID.size() - 1;
     }
     
@@ -203,7 +203,7 @@ public class Scanner {
                 System.out.println("getRestArg");
                 System.out.println(buf);
                 ungetc(fp);
-                StatD.restArg.addElement(buf);
+                StatD.restArg.add(buf);
                 return StatD.restArg.size() - 1;
               }
             else {

@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Vector;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
@@ -61,8 +60,8 @@ public class FileUploadController {
     public String handleFileUpload(@RequestParam("file") MultipartFile file,
                                    RedirectAttributes redirectAttributes) {
 
-        StatD.TID = new Vector<Ident>();
-        StatD.restArg = new Vector<String>();
+        StatD.TID = new ArrayList<>();
+        StatD.restArg = new ArrayList<>();
         ArrayFilFiles.filFiles = new ArrayList();
         ArrayFilFiles.filFiles.add("Исходный код:");
 

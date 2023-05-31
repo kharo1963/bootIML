@@ -1,7 +1,8 @@
 package com.example.bootIML.interpretator;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Stack;
+import java.util.Deque;
 import java.util.Scanner;
 
 import com.example.bootIML.service.ArrayFilFiles;
@@ -10,7 +11,7 @@ public class Executer {
 
     public void Execute(ArrayList<Lex> poliz) {
         Lex pc_el;
-        Stack<Integer> args = new Stack<Integer>();
+        Deque<Integer> args = new ArrayDeque<Integer>();
         int i, j, index = 0, size = poliz.size();
         while (index < size) {
             pc_el = poliz.get(index);

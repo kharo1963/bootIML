@@ -1,15 +1,18 @@
 package com.example.bootIML.interpretator;
 
+import java.util.ArrayDeque;
 import java.util.ArrayList;
-import java.util.Stack;
+import java.util.Deque;
 
 public class Parser {
     int currentLexVal;
     Lex currentLex;
     TypeOfLex currentLexType;
     Scanner scan;
-    Stack<Integer> st_int = new Stack<Integer>();
-    Stack<TypeOfLex> st_lex = new Stack<TypeOfLex>();
+    //Stack<Integer> st_int = new Stack<Integer>();
+    Deque<Integer> st_int = new ArrayDeque<>();
+    //Stack<TypeOfLex> st_lex = new Stack<TypeOfLex>();
+    Deque<TypeOfLex> st_lex = new ArrayDeque<>();
     public ArrayList<Lex> poliz = new ArrayList<>();
 
     public Parser(String program) {
@@ -272,7 +275,7 @@ public class Parser {
 
     private void updateTID(TypeOfLex type) {
         int i;
-        while (!st_int.empty()) {
+        while (st_int.size() > 0) {
             i = StatD.from_st_i(st_int);
             if (StatD.TID.get(i).get_declare())
                 throw new RuntimeException("twice");
