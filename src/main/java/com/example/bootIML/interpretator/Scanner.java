@@ -53,14 +53,14 @@ public class Scanner {
         return StatD.TID.size() - 1;
     }
     
-    Type_of_lex GetTypeOfOrd (int ord) {
+    TypeOfLex GetTypeOfOrd (int ord) {
     	int k = 0;
-		for (Type_of_lex e: Type_of_lex.values()) {
+		for (TypeOfLex e: TypeOfLex.values()) {
 			if (k == ord)
 				return e;
 			++k;
 		}
-		return Type_of_lex.LEX_NULL;
+		return TypeOfLex.LEX_NULL;
     }
     
     String TW[] = { "", "and", "begin", "bool", "do", "else", "end", "if", "false", "int", "not", "or", "program",
@@ -106,7 +106,7 @@ public class Scanner {
     Lex get_lex() {
         int         d = 1, j;
         String      buf = "";
-        State_lex   CS = State_lex.H;
+        StateLex CS = StateLex.H;
         do {
             gc();
             switch (CS) {
@@ -114,30 +114,30 @@ public class Scanner {
                 if (c == ' ' || c == '\n' || c == '\r' || c == '\t');
                 else if (Character.isLetter(c)) {
                     buf = buf + c;
-                    CS = State_lex.IDENT;
+                    CS = StateLex.IDENT;
                 }
                 else if (Character.isDigit(c)) {
                     d = c - '0';
-                    CS = State_lex.NUMB;
+                    CS = StateLex.NUMB;
                 }
                 else if (c == '{') {
-                    CS = State_lex.COM;
+                    CS = StateLex.COM;
                 }
                 else if (c == ':' || c == '<' || c == '>') {
                     buf = buf + c;
-                    CS = State_lex.ALE;
+                    CS = StateLex.ALE;
                 }
                 else if (c == '@')
-                    return new Lex(Type_of_lex.LEX_FIN);
+                    return new Lex(TypeOfLex.LEX_FIN);
                 else if (c == '!') {
                     buf = buf + c;
-                    CS = State_lex.NEQ;
+                    CS = StateLex.NEQ;
                 }
                 else {
                     buf = buf + c;                  
                     j = look (buf, TD);                  
                     if (j > 0) {      
-                        return new Lex(GetTypeOfOrd(j + Type_of_lex.LEX_FIN.ordinal()), j);
+                        return new Lex(GetTypeOfOrd(j + TypeOfLex.LEX_FIN.ordinal()), j);
                     }
                     else
                          throw new RuntimeException (String.valueOf(c));
@@ -155,7 +155,7 @@ public class Scanner {
                     }
                     else {
                         j = put(buf);
-                        return new Lex(Type_of_lex.LEX_ID, j);
+                        return new Lex(TypeOfLex.LEX_ID, j);
                     }
                 }
                 break;
@@ -165,12 +165,12 @@ public class Scanner {
                 }
                 else {
                     ungetc(fp);
-                    return new Lex(Type_of_lex.LEX_NUM, d);
+                    return new Lex(TypeOfLex.LEX_NUM, d);
                 }
                 break;
             case COM:
                 if (c == '}') {
-                    CS = State_lex.H;
+                    CS = StateLex.H;
                 }
                 else if (c == '@' || c == '{')
                 	throw new RuntimeException (String.valueOf(c));
@@ -183,12 +183,12 @@ public class Scanner {
                     ungetc(fp);
                 }
                 j = look(buf, TD);
-                return new Lex(GetTypeOfOrd(j + Type_of_lex.LEX_FIN.ordinal()), j);
+                return new Lex(GetTypeOfOrd(j + TypeOfLex.LEX_FIN.ordinal()), j);
             case NEQ:
                 if (c == '=') {
                     buf = buf + c;
                     j = look(buf, TD);
-                    return new Lex(Type_of_lex.LEX_NEQ, j);
+                    return new Lex(TypeOfLex.LEX_NEQ, j);
                 }
                 else
                 	throw new RuntimeException (String.valueOf('!'));

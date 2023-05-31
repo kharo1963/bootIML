@@ -16,8 +16,8 @@ public class StatD {
 		st.pop();
 	    return i;
 	}
-	static Type_of_lex from_st_t(Stack<Type_of_lex> st) {
-		Type_of_lex i = st.peek();
+	static TypeOfLex from_st_t(Stack<TypeOfLex> st) {
+		TypeOfLex i = st.peek();
 		st.pop();
 	    return i;
 	}

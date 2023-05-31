@@ -3,7 +3,7 @@ package com.example.bootIML.interpretator;
 public class Ident {
     String      name;
     Boolean     declare;
-    Type_of_lex type;
+    TypeOfLex type;
     Boolean     assign;
     int         value;
     public
@@ -25,10 +25,10 @@ public class Ident {
     void put_declare() {
         declare = true;
     }
-    Type_of_lex get_type() {
+    TypeOfLex get_type() {
         return type;
     }
-    void put_type(Type_of_lex t) {
+    void put_type(TypeOfLex t) {
         type = t;
     }
     Boolean get_assign() {

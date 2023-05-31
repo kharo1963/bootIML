@@ -1,6 +1,6 @@
 package com.example.bootIML.interpretator;
 
-public enum Type_of_lex {
+public enum TypeOfLex {
     LEX_NULL,                                                                                   /* 0*/
     LEX_AND, LEX_BEGIN, LEX_BOOL, LEX_DO, LEX_ELSE, LEX_END, LEX_IF, LEX_FALSE, LEX_INT,        /* 9*/
     LEX_NOT, LEX_OR, LEX_PROGRAM, LEX_READ, LEX_THEN, LEX_TRUE, LEX_VAR, LEX_WHILE, LEX_WRITE,  /*18*/

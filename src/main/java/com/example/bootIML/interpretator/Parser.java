@@ -1,406 +1,357 @@
 package com.example.bootIML.interpretator;
 
+import java.util.ArrayList;
 import java.util.Stack;
-import java.util.Vector;
 
 public class Parser {
-    Lex          curr_lex;
-    Type_of_lex  c_type;
-    int          c_val;
-    Scanner      scan;
-    Stack<Integer>     st_int = new Stack<Integer>();
-    Stack<Type_of_lex> st_lex = new Stack<Type_of_lex>();
-    void  P() {
-        if (c_type == Type_of_lex.LEX_PROGRAM) {
-            gl();
-        }
-        else
-            throw new RuntimeException (curr_lex.toString());
-        D1();
-        if (c_type == Type_of_lex.LEX_SEMICOLON)
-            gl();
-        else
-        	throw new RuntimeException (curr_lex.toString());
-        B();    	
-    }
-    void  D1() {
-        if (c_type == Type_of_lex.LEX_VAR) {
-            gl();
-            D();
-            while (c_type == Type_of_lex.LEX_COMMA) {
-                gl();
-                D();
-            }
-        }
-        else
-        	throw new RuntimeException (curr_lex.toString());   	
-    }
-    void  D() {
-        if (c_type != Type_of_lex.LEX_ID)
-        	throw new RuntimeException (curr_lex.toString());
-        else {
-            st_int.push(c_val);
-            gl();
-            while (c_type == Type_of_lex.LEX_COMMA) {
-                gl();
-                if (c_type != Type_of_lex.LEX_ID)
-                	throw new RuntimeException (curr_lex.toString());
-                else {
-                    st_int.push(c_val);
-                    gl();
-                }
-            }
-            if (c_type != Type_of_lex.LEX_COLON)
-            	throw new RuntimeException (curr_lex.toString());
-            else {
-                gl();
-                if (c_type == Type_of_lex.LEX_INT) {
-                    dec(Type_of_lex.LEX_INT);
-                    gl();
-                }
-                else
-                    if (c_type == Type_of_lex.LEX_BOOL) {
-                        dec(Type_of_lex.LEX_BOOL);
-                        gl();
-                    }
-                    else
-                    	throw new RuntimeException (curr_lex.toString());
-            }
-        }    	
-    }
-    void  B() {
-        if (c_type == Type_of_lex.LEX_BEGIN) {
-            gl();
-            S();
-            while (c_type == Type_of_lex.LEX_SEMICOLON) {
-                gl();
-                S();
-            }
-            if (c_type == Type_of_lex.LEX_END) {
-                gl();
-            }
-            else {
-            	throw new RuntimeException (curr_lex.toString());
-            }
-        }
-        else
-        	throw new RuntimeException (curr_lex.toString());   	
-    }
-    void  S() {
-        int pl0, pl1, pl2, pl3;
-        int id_cnt = 0;
-        int c_prev_val;
-        Type_of_lex  c_prev_type;
+    int currentLexVal;
+    Lex currentLex;
+    TypeOfLex currentLexType;
+    Scanner scan;
+    Stack<Integer> st_int = new Stack<Integer>();
+    Stack<TypeOfLex> st_lex = new Stack<TypeOfLex>();
+    public ArrayList<Lex> poliz = new ArrayList<>();
 
-        if (c_type == Type_of_lex.LEX_IF) {
-            gl();
-            E();
-            eq_bool();
-            pl2 = poliz.size();
-            poliz.addElement(new Lex());
-            poliz.addElement(new Lex(Type_of_lex.POLIZ_FGO));
-            if (c_type == Type_of_lex.LEX_THEN) {
-                gl();
-                S();
-                pl3 = poliz.size();
-                poliz.addElement(new Lex());
-
-                poliz.addElement(new Lex(Type_of_lex.POLIZ_GO));
-                poliz.setElementAt(new Lex(Type_of_lex.POLIZ_LABEL, poliz.size()),pl2);
-  
-                if (c_type == Type_of_lex.LEX_ELSE) {
-                    gl();
-                    S();
-                     poliz.setElementAt(new Lex(Type_of_lex.POLIZ_LABEL, poliz.size()),pl3);
-                }
-                else
-                	throw new RuntimeException (curr_lex.toString());
-            }
-            else
-              	throw new RuntimeException (curr_lex.toString());
-        }//end if
-        else if (c_type == Type_of_lex.LEX_WHILE) {
-            pl0 = poliz.size();
-            gl();
-            E();
-            eq_bool();
-            pl1 = poliz.size();
-            poliz.addElement(new Lex());
-            poliz.addElement(new Lex(Type_of_lex.POLIZ_FGO));
-            if (c_type == Type_of_lex.LEX_DO) {
-                gl();
-                S();
-                poliz.addElement(new Lex(Type_of_lex.POLIZ_LABEL, pl0));
-                poliz.addElement(new Lex(Type_of_lex.POLIZ_GO));
-                poliz.setElementAt(new Lex(Type_of_lex.POLIZ_LABEL, poliz.size()),pl1);
-            }
-            else
-            	throw new RuntimeException (curr_lex.toString());
-        }//end while
-        else if (c_type == Type_of_lex.LEX_READ) {
-            gl();
-            if (c_type == Type_of_lex.LEX_LPAREN) {
-                gl();
-                if (c_type == Type_of_lex.LEX_ID) {
-                    check_id_in_read();
-                    poliz.addElement(new Lex(Type_of_lex.POLIZ_ADDRESS, c_val));
-                    gl();
-                }
-                else
-                	throw new RuntimeException (curr_lex.toString());
-                if (c_type == Type_of_lex.LEX_RPAREN) {
-                    gl();
-                    poliz.addElement(new Lex(Type_of_lex.LEX_READ));
-                }
-                else
-                	throw new RuntimeException (curr_lex.toString());
-            }
-            else
-            	throw new RuntimeException (curr_lex.toString());
-        }//end read
-        else if (c_type == Type_of_lex.LEX_GET) {
-            gl();
-            if (c_type == Type_of_lex.LEX_LPAREN) {
-                gl();
-                if (c_type == Type_of_lex.LEX_ID) {
-                    check_id_in_read();
-                    poliz.addElement(new Lex(Type_of_lex.POLIZ_ADDRESS, c_val));
-                    gl();
-                }
-                else
-                    throw new RuntimeException (curr_lex.toString());
-                if (c_type == Type_of_lex.LEX_COMMA) {
-                    c_val = glRestArg();
-                    poliz.addElement(new Lex(Type_of_lex.POLIZ_ADDRESS, c_val));
-                    gl();
-                }
-                else
-                    throw new RuntimeException (curr_lex.toString());
-                if (c_type == Type_of_lex.LEX_RPAREN) {
-                    gl();
-                    poliz.addElement(new Lex(Type_of_lex.LEX_GET));
-                }
-                else
-                    throw new RuntimeException (curr_lex.toString());
-            }
-            else
-                throw new RuntimeException (curr_lex.toString());
-        }//end get
-        else if (c_type == Type_of_lex.LEX_WRITE) {
-            gl();
-            if (c_type == Type_of_lex.LEX_LPAREN) {
-                gl();
-                E();
-                if (c_type == Type_of_lex.LEX_RPAREN) {
-                    gl();
-                    poliz.addElement(new Lex(Type_of_lex.LEX_WRITE));
-                }
-                else
-                	throw new RuntimeException (curr_lex.toString());
-            }
-            else
-            	throw new RuntimeException (curr_lex.toString());
-        }//end write
-        else if (c_type == Type_of_lex.LEX_ID) {
-            check_id();
-            poliz.addElement(new Lex(Type_of_lex.POLIZ_ADDRESS, c_val));
-            gl();
-            if (c_type == Type_of_lex.LEX_ASSIGN) {
-                ++id_cnt;
-                gl();
-                while (c_type == Type_of_lex.LEX_ID) {
-                    check_id();
-                    scan.store_pos();
-                    c_prev_val  = c_val;
-                    c_prev_type = c_type;
-                    gl();
-                    if (c_type == Type_of_lex.LEX_ASSIGN) {
-                        eq_type();
-                        if (StatD.TID.get(c_prev_val).get_declare())
-                            st_lex.push(StatD.TID.get(c_prev_val).get_type());
-                        else
-                        	throw new RuntimeException ("not declared");
-                        poliz.addElement(new Lex(Type_of_lex.POLIZ_ADDRESS, c_prev_val));
-                        gl();
-                        ++id_cnt;
-                        continue;
-                    }
-                    scan.restore_pos();
-                    c_val  = c_prev_val;
-                    c_type = c_prev_type;
-                    break;
-                }
-                E();
-                eq_type();
-                while (id_cnt > 0) {
-                    --id_cnt;
-                    poliz.addElement(new Lex(Type_of_lex.LEX_ASSIGN));
-                }
-                if (c_type == Type_of_lex.LEX_SEMICOLON)
-                    poliz.addElement(new Lex(Type_of_lex.LEX_SEMICOLON));
-            }
-            else
-            	throw new RuntimeException (curr_lex.toString());
-        }//assign-end
-        else
-            B();    	
-    }
-    void  E() {
-        E1();
-        if (c_type == Type_of_lex.LEX_EQ  || c_type == Type_of_lex.LEX_LSS || c_type == Type_of_lex.LEX_GTR ||
-            c_type == Type_of_lex.LEX_LEQ || c_type == Type_of_lex.LEX_GEQ || c_type == Type_of_lex.LEX_NEQ) {
-            st_lex.push(c_type);
-            gl();
-            E1();
-            check_op();
-        }   	    	
-    }    
-    void  E1() {
-        T();
-        while (c_type == Type_of_lex.LEX_PLUS || c_type == Type_of_lex.LEX_MINUS || c_type == Type_of_lex.LEX_OR) {
-            st_lex.push(c_type);
-            gl();
-            T();
-            check_op();
-        }    	
-    }
-    void  T() {
-        F();
-        while (c_type == Type_of_lex.LEX_TIMES || c_type == Type_of_lex.LEX_SLASH || c_type == Type_of_lex.LEX_AND) {
-            st_lex.push(c_type);
-            gl();
-            F();
-            check_op();
-        }    	
-    }
-    void  F() {
-        if (c_type == Type_of_lex.LEX_ID) {
-            check_id();
-            poliz.addElement(new Lex(Type_of_lex.LEX_ID, c_val));
-            gl();
-        }
-        else if (c_type == Type_of_lex.LEX_NUM) {
-            st_lex.push(Type_of_lex.LEX_INT);
-            poliz.addElement(curr_lex);
-            gl();
-        }
-        else if (c_type == Type_of_lex.LEX_TRUE) {
-            st_lex.push(Type_of_lex.LEX_BOOL);
-            poliz.addElement(new Lex(Type_of_lex.LEX_TRUE, 1));
-            gl();
-        }
-        else if (c_type == Type_of_lex.LEX_FALSE) {
-            st_lex.push(Type_of_lex.LEX_BOOL);
-            poliz.addElement(new Lex(Type_of_lex.LEX_FALSE, 0));
-            gl();
-        }
-        else if (c_type == Type_of_lex.LEX_NOT) {
-            gl();
-            F();
-            check_not();
-        }
-        else if (c_type == Type_of_lex.LEX_LPAREN) {
-            gl();
-            E();
-            if (c_type == Type_of_lex.LEX_RPAREN)
-                gl();
-            else
-            	throw new RuntimeException (curr_lex.toString());
-        }
-        else
-        	throw new RuntimeException (curr_lex.toString());    	
-    }
-    void  dec(Type_of_lex type) {
-        int i;              
-        while (!st_int.empty()) {
-        	i = StatD.from_st_i (st_int);
-            if (StatD.TID.get(i).get_declare())
-            	throw new RuntimeException ("twice");  
-            else {
-            	StatD.TID.get(i).put_declare();
-            	StatD.TID.get(i).put_type(type);
-            }
-        }    	
-    }
-    void  check_id() {
-        if (StatD.TID.get(c_val).get_declare())
-            st_lex.push(StatD.TID.get(c_val).get_type());
-        else
-        	throw new RuntimeException ("not declared");	
-    }
-    void  check_op() {
-        Type_of_lex t1, t2, op, t = Type_of_lex.LEX_INT, r = Type_of_lex.LEX_BOOL;
-
-        t2 = StatD.from_st_t (st_lex);
-        op = StatD.from_st_t (st_lex);
-        t1 = StatD.from_st_t (st_lex);
-
-        if (op == Type_of_lex.LEX_PLUS || op == Type_of_lex.LEX_MINUS || op == Type_of_lex.LEX_TIMES || op == Type_of_lex.LEX_SLASH)
-            r = Type_of_lex.LEX_INT;
-        if (op == Type_of_lex.LEX_OR || op == Type_of_lex.LEX_AND)
-            t = Type_of_lex.LEX_BOOL;
-        if (t1 == t2 && t1 == t)
-            st_lex.push(r);
-        else
-            throw new RuntimeException ("wrong types are in operation");       
-        poliz.addElement(new Lex(op));  
-    }
-    void  check_not() {
-        if (st_lex.peek() != Type_of_lex.LEX_BOOL)
-        	throw new RuntimeException ("wrong type is in not");
-        else
-            poliz.addElement(new Lex(Type_of_lex.LEX_NOT));
-    }
-    void  eq_type() {
-        Type_of_lex t;
-        t = StatD.from_st_t (st_lex);
-        if (t != st_lex.peek())
-        	throw new RuntimeException ("wrong types are in :=");
-        st_lex.pop();    	
-    }
-    void  eq_bool() {
-        if (st_lex.peek() != Type_of_lex.LEX_BOOL)
-        	throw new RuntimeException ("expression is not boolean");
-        st_lex.pop();  	
-    }
-    void  check_id_in_read() {
-        if (!StatD.TID.get(c_val).get_declare())
-        	throw new RuntimeException ("not declared");
-    }
-    void  gl() {
-        curr_lex = scan.get_lex();
-        c_type   = curr_lex.get_type();
-        c_val    = curr_lex.get_value();
-        System.out.println("gl");
-        System.out.println(c_type);
-        System.out.println(c_val);
-    }
-    int  glRestArg() {
-        int restArg = scan.getRestArg();
-        return restArg;
+    public Parser(String program) {
+        scan = new Scanner(program);
     }
 
-    public
-    Vector<Lex> poliz = new Vector<Lex>();
-    Parser(String program) {
-         scan = new Scanner(program);
-    }
-    void  analyze() {
-        gl();
-        P();
-        if (c_type != Type_of_lex.LEX_FIN)
-        	throw new RuntimeException (curr_lex.toString());
+    public void analyze() {
+        getNextLex();
+        parseProgram();
+        checkTypeOfLex(currentLex, TypeOfLex.LEX_FIN);
         /* */
         System.out.println("poliz");
         for (Lex l : poliz) {
-        	System.out.println(l.toString());
-        	System.out.println(l.t_lex);
-        	System.out.println(l.v_lex);
+            System.out.println(l.toString());
+            System.out.println(l.t_lex);
+            System.out.println(l.v_lex);
         }
         scan.freeResourse();
         /* */
         System.out.println();
         System.out.println("Yes!!!");
+    }
+
+    private void parseProgram() {
+        checkTypeOfLex(currentLex, TypeOfLex.LEX_PROGRAM);
+        getNextLex();
+        parseDefinition();
+        checkTypeOfLex(currentLex, TypeOfLex.LEX_SEMICOLON);
+        getNextLex();
+        parseProgramBody();
+    }
+
+    private void parseDefinition() {
+        checkTypeOfLex(currentLex, TypeOfLex.LEX_VAR);
+        getNextLex();
+        parseDefinitionOneType();
+        while (currentLexType == TypeOfLex.LEX_COMMA) {
+            getNextLex();
+            parseDefinitionOneType();
+        }
+    }
+
+    private void parseDefinitionOneType() {
+        checkTypeOfLex(currentLex, TypeOfLex.LEX_ID);
+        st_int.push(currentLexVal);
+        getNextLex();
+        while (currentLexType == TypeOfLex.LEX_COMMA) {
+            getNextLex();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_ID);
+            st_int.push(currentLexVal);
+            getNextLex();
+        }
+        checkTypeOfLex(currentLex, TypeOfLex.LEX_COLON);
+        getNextLex();
+        if (currentLexType == TypeOfLex.LEX_INT) {
+            updateTID(TypeOfLex.LEX_INT);
+        } else if (currentLexType == TypeOfLex.LEX_BOOL) {
+            updateTID(TypeOfLex.LEX_BOOL);
+        } else {
+            throw new RuntimeException(currentLex.toString());
+        }
+        getNextLex();
+    }
+
+    private void parseProgramBody() {
+        checkTypeOfLex(currentLex, TypeOfLex.LEX_BEGIN);
+        getNextLex();
+        parseSentences();
+        while (currentLexType == TypeOfLex.LEX_SEMICOLON) {
+            getNextLex();
+            parseSentences();
+        }
+        if (currentLexType == TypeOfLex.LEX_END) {
+            getNextLex();
+        } else {
+            throw new RuntimeException(currentLex.toString());
+        }
+    }
+
+    private void parseSentences() {
+        int pl0, pl1, pl2, pl3;
+        int idCnt = 0;
+        int previousLexVal;
+        TypeOfLex previousLexType;
+
+        if (currentLexType == TypeOfLex.LEX_IF) {
+            getNextLex();
+            parseExpression();
+            eqBool();
+            pl2 = poliz.size();
+            poliz.add(new Lex());
+            poliz.add(new Lex(TypeOfLex.POLIZ_FGO));
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_THEN);
+            getNextLex();
+            parseSentences();
+            pl3 = poliz.size();
+            poliz.add(new Lex());
+            poliz.add(new Lex(TypeOfLex.POLIZ_GO));
+            poliz.set(pl2, new Lex(TypeOfLex.POLIZ_LABEL, poliz.size()));
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_ELSE);
+            getNextLex();
+            parseSentences();
+            poliz.set(pl3, new Lex(TypeOfLex.POLIZ_LABEL, poliz.size()));
+        }//end if
+        else if (currentLexType == TypeOfLex.LEX_WHILE) {
+            pl0 = poliz.size();
+            getNextLex();
+            parseExpression();
+            eqBool();
+            pl1 = poliz.size();
+            poliz.add(new Lex());
+            poliz.add(new Lex(TypeOfLex.POLIZ_FGO));
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_DO);
+            getNextLex();
+            parseSentences();
+            poliz.add(new Lex(TypeOfLex.POLIZ_LABEL, pl0));
+            poliz.add(new Lex(TypeOfLex.POLIZ_GO));
+            poliz.set(pl1, new Lex(TypeOfLex.POLIZ_LABEL, poliz.size()));
+        }//end while
+        else if (currentLexType == TypeOfLex.LEX_READ) {
+            getNextLex();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_LPAREN);
+            getNextLex();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_ID);
+            checkIdInRead();
+            poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, currentLexVal));
+            getNextLex();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_RPAREN);
+            getNextLex();
+            poliz.add(new Lex(TypeOfLex.LEX_READ));
+        }//end read
+        else if (currentLexType == TypeOfLex.LEX_GET) {
+            getNextLex();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_LPAREN);
+            getNextLex();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_ID);
+            checkIdInRead();
+            poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, currentLexVal));
+            getNextLex();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_COMMA);
+            currentLexVal = glRestArg();
+            poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, currentLexVal));
+            getNextLex();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_RPAREN);
+            getNextLex();
+            poliz.add(new Lex(TypeOfLex.LEX_GET));
+        }//end get
+        else if (currentLexType == TypeOfLex.LEX_WRITE) {
+            getNextLex();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_LPAREN);
+            getNextLex();
+            parseExpression();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_RPAREN);
+            getNextLex();
+            poliz.add(new Lex(TypeOfLex.LEX_WRITE));
+        }//end write
+        else if (currentLexType == TypeOfLex.LEX_ID) {
+            checkId();
+            poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, currentLexVal));
+            getNextLex();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_ASSIGN);
+            ++idCnt;
+            getNextLex();
+            while (currentLexType == TypeOfLex.LEX_ID) {
+                checkId();
+                scan.store_pos();
+                previousLexVal = currentLexVal;
+                previousLexType = currentLexType;
+                getNextLex();
+                if (currentLexType == TypeOfLex.LEX_ASSIGN) {
+                    eqType();
+                    if (StatD.TID.get(previousLexVal).get_declare())
+                        st_lex.push(StatD.TID.get(previousLexVal).get_type());
+                    else
+                        throw new RuntimeException("not declared");
+                    poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, previousLexVal));
+                    getNextLex();
+                    ++idCnt;
+                    continue;
+                }
+                scan.restore_pos();
+                currentLexVal = previousLexVal;
+                currentLexType = previousLexType;
+                break;
+            }
+            parseExpression();
+            eqType();
+            while (idCnt > 0) {
+                --idCnt;
+                poliz.add(new Lex(TypeOfLex.LEX_ASSIGN));
+            }
+            if (currentLexType == TypeOfLex.LEX_SEMICOLON) {
+                poliz.add(new Lex(TypeOfLex.LEX_SEMICOLON));
+            }
+        }//assign-end
+        else
+            parseProgramBody();
+    }
+
+    private void parseExpression() {
+        parseExpressionPart();
+        if (currentLexType == TypeOfLex.LEX_EQ || currentLexType == TypeOfLex.LEX_LSS || currentLexType == TypeOfLex.LEX_GTR ||
+                currentLexType == TypeOfLex.LEX_LEQ || currentLexType == TypeOfLex.LEX_GEQ || currentLexType == TypeOfLex.LEX_NEQ) {
+            st_lex.push(currentLexType);
+            getNextLex();
+            parseExpressionPart();
+            checkOp();
+        }
+    }
+
+    private void parseExpressionPart() {
+        parseTerm();
+        while (currentLexType == TypeOfLex.LEX_PLUS || currentLexType == TypeOfLex.LEX_MINUS || currentLexType == TypeOfLex.LEX_OR) {
+            st_lex.push(currentLexType);
+            getNextLex();
+            parseTerm();
+            checkOp();
+        }
+    }
+
+    private void parseTerm() {
+        parseFactor();
+        while (currentLexType == TypeOfLex.LEX_TIMES || currentLexType == TypeOfLex.LEX_SLASH || currentLexType == TypeOfLex.LEX_AND) {
+            st_lex.push(currentLexType);
+            getNextLex();
+            parseFactor();
+            checkOp();
+        }
+    }
+
+    private void parseFactor() {
+        if (currentLexType == TypeOfLex.LEX_ID) {
+            checkId();
+            poliz.add(new Lex(TypeOfLex.LEX_ID, currentLexVal));
+            getNextLex();
+        } else if (currentLexType == TypeOfLex.LEX_NUM) {
+            st_lex.push(TypeOfLex.LEX_INT);
+            poliz.add(currentLex);
+            getNextLex();
+        } else if (currentLexType == TypeOfLex.LEX_TRUE) {
+            st_lex.push(TypeOfLex.LEX_BOOL);
+            poliz.add(new Lex(TypeOfLex.LEX_TRUE, 1));
+            getNextLex();
+        } else if (currentLexType == TypeOfLex.LEX_FALSE) {
+            st_lex.push(TypeOfLex.LEX_BOOL);
+            poliz.add(new Lex(TypeOfLex.LEX_FALSE, 0));
+            getNextLex();
+        } else if (currentLexType == TypeOfLex.LEX_NOT) {
+            getNextLex();
+            parseFactor();
+            checkNot();
+        } else if (currentLexType == TypeOfLex.LEX_LPAREN) {
+            getNextLex();
+            parseExpression();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_RPAREN);
+            getNextLex();
+        } else
+            throw new RuntimeException(currentLex.toString());
+    }
+
+    private void updateTID(TypeOfLex type) {
+        int i;
+        while (!st_int.empty()) {
+            i = StatD.from_st_i(st_int);
+            if (StatD.TID.get(i).get_declare())
+                throw new RuntimeException("twice");
+            else {
+                StatD.TID.get(i).put_declare();
+                StatD.TID.get(i).put_type(type);
+            }
+        }
+    }
+
+    private void checkId() {
+        if (StatD.TID.get(currentLexVal).get_declare())
+            st_lex.push(StatD.TID.get(currentLexVal).get_type());
+        else
+            throw new RuntimeException("not declared");
+    }
+
+    private void checkOp() {
+        TypeOfLex t1, t2, op, t = TypeOfLex.LEX_INT, r = TypeOfLex.LEX_BOOL;
+
+        t2 = StatD.from_st_t(st_lex);
+        op = StatD.from_st_t(st_lex);
+        t1 = StatD.from_st_t(st_lex);
+
+        if (op == TypeOfLex.LEX_PLUS || op == TypeOfLex.LEX_MINUS || op == TypeOfLex.LEX_TIMES || op == TypeOfLex.LEX_SLASH)
+            r = TypeOfLex.LEX_INT;
+        if (op == TypeOfLex.LEX_OR || op == TypeOfLex.LEX_AND)
+            t = TypeOfLex.LEX_BOOL;
+        if (t1 == t2 && t1 == t)
+            st_lex.push(r);
+        else
+            throw new RuntimeException("wrong types are in operation");
+        poliz.add(new Lex(op));
+    }
+
+    private void checkNot() {
+        if (st_lex.peek() != TypeOfLex.LEX_BOOL)
+            throw new RuntimeException("wrong type is in not");
+        else
+            poliz.add(new Lex(TypeOfLex.LEX_NOT));
+    }
+
+    private void eqType() {
+        TypeOfLex t;
+        t = StatD.from_st_t(st_lex);
+        if (t != st_lex.peek())
+            throw new RuntimeException("wrong types are in :=");
+        st_lex.pop();
+    }
+
+    private void eqBool() {
+        if (st_lex.peek() != TypeOfLex.LEX_BOOL)
+            throw new RuntimeException("expression is not boolean");
+        st_lex.pop();
+    }
+
+    private void checkIdInRead() {
+        if (!StatD.TID.get(currentLexVal).get_declare())
+            throw new RuntimeException("not declared");
+    }
+
+    private void getNextLex() {
+        currentLex = scan.get_lex();
+        currentLexType = currentLex.get_type();
+        currentLexVal = currentLex.get_value();
+        System.out.println("gl");
+        System.out.println(currentLexType);
+        System.out.println(currentLexVal);
+    }
+
+    private int glRestArg() {
+        int restArg = scan.getRestArg();
+        return restArg;
+    }
+
+    private void checkTypeOfLex(Lex lex, TypeOfLex typeOfLex) {
+        if (lex.get_type() != typeOfLex) {
+            throw new RuntimeException(lex.toString());
+        }
     }
 }
 

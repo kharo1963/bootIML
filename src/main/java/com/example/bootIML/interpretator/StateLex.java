@@ -1,5 +1,5 @@
 package com.example.bootIML.interpretator;
 
-public enum State_lex {
+public enum StateLex {
 	H, IDENT, NUMB, COM, ALE, NEQ
 }

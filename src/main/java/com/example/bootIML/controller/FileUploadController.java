@@ -68,14 +68,13 @@ public class FileUploadController {
 
         String srcCode = storageService.store(file);
 
-        Path path = Paths.get(srcCode );
+        Path path = Paths.get(srcCode);
         try {
             List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-            for(String line : lines){
+            for (String line : lines) {
                 ArrayFilFiles.filFiles.add(line + System.lineSeparator());
             }
-         }
-        catch (IOException e) {
+        } catch (IOException e) {
             e.printStackTrace();
         }
 
@@ -83,12 +82,11 @@ public class FileUploadController {
         try {
             System.out.println("Hello");
             System.out.println(srcCode);
-            Interpretator I = new Interpretator (srcCode);
+            Interpretator I = new Interpretator(srcCode);
             I.interpretation();
             redirectAttributes.addFlashAttribute("message",
                     "Вы успешно интерпретировали " + file.getOriginalFilename() + "!");
-        }
-        catch (Throwable t) {
+        } catch (Throwable t) {
             t.printStackTrace();
         }
         redirectAttributes.addFlashAttribute("files", ArrayFilFiles.filFiles);
