@@ -26,7 +26,6 @@ import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import com.example.bootIML.service.StorageFileNotFoundException;
 import com.example.bootIML.service.StorageService;
 import com.example.bootIML.service.ArrayFilFiles;
-import com.example.bootIML.interpretator.Ident;
 import com.example.bootIML.interpretator.StatD;
 import com.example.bootIML.interpretator.Interpretator;
 
