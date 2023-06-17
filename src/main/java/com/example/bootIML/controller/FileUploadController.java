@@ -95,24 +95,14 @@ public class FileUploadController {
 
         System.out.println("addSample");
 
-        Path path = Paths.get(System.getProperty("user.dir") + "\\ext-gcd.txt");
+        Path path = Paths.get("ext-gcd.txt");
         try {
             List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
             for (String line : lines) {
                 sourceText += line + System.lineSeparator();            }
         } catch (IOException e) {
             e.printStackTrace();
-            sourceText = "program"
-                    + System.lineSeparator()
-                    + "   var x,y : int ;"
-                    + System.lineSeparator()
-                    + "begin"
-                    + System.lineSeparator()
-                    + "   x := y := 1 ;"
-                    + System.lineSeparator()
-                    + "   write (x); write (y);"
-                    + System.lineSeparator()
-                    + "end @";
+            sourceText = "program var x,y : int ;  begin x := y := 1 ; write (x); write (y) end @";
         }
         redirectAttributes.addFlashAttribute("sourceText", sourceText);
 
