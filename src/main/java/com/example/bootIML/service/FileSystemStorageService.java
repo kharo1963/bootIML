@@ -41,8 +41,6 @@ public class FileSystemStorageService implements StorageService {
 
     @Override
     public Stream<Path> loadAll() {
-        System.out.println("!!!!!!!!!!!!!!!!!!!!!this.rootLocation");
-        System.out.println(this.rootLocation);
        try {
             return Files.walk(this.rootLocation, 1)
                     .filter(path -> !path.equals(this.rootLocation))

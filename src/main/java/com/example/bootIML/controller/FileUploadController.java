@@ -8,6 +8,7 @@ import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.example.bootIML.service.StorageProperties;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
@@ -43,7 +44,40 @@ public class FileUploadController {
     @GetMapping("/")
     public String listUploadedFiles(Model model) throws IOException {
 
+        String sourceText = "";
+
+        Path path = Paths.get(System.getProperty("user.dir") + "\\ext-gcd.txt");
+        try {
+            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            for (String line : lines) {
+                sourceText += line + System.lineSeparator();            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            sourceText = "program"
+                       + System.lineSeparator()
+                       + "   var x,y : int ;"
+                       + System.lineSeparator()
+                       + "begin"
+                       + System.lineSeparator()
+                       + "   x := y := 1 ;"
+                       + System.lineSeparator()
+                       + "   write (x); write (y);"
+                       + System.lineSeparator()
+                       + "end @";
+        }
+
         return "uploadForm";
+    }
+
+    @GetMapping("/result")
+    public String resultUploaded(Model model) throws IOException {
+
+        String image = "data:image/png;base64,"
+                     + "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4"
+                     + "//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==";
+        model.addAttribute("image", image);
+
+        return "resultForm";
     }
 
     @GetMapping("/files/{filename:.+}")
@@ -54,40 +88,89 @@ public class FileUploadController {
         return ResponseEntity.ok().header(HttpHeaders.CONTENT_DISPOSITION,
                 "attachment; filename=\"" + file.getFilename() + "\"").body(file);
     }
+    @PostMapping("/addSample")
+    public String handleAddSample(RedirectAttributes redirectAttributes) {
+
+        String sourceText = "";
+
+        System.out.println("addSample");
+
+        Path path = Paths.get(System.getProperty("user.dir") + "\\ext-gcd.txt");
+        try {
+            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            for (String line : lines) {
+                sourceText += line + System.lineSeparator();            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            sourceText = "program"
+                    + System.lineSeparator()
+                    + "   var x,y : int ;"
+                    + System.lineSeparator()
+                    + "begin"
+                    + System.lineSeparator()
+                    + "   x := y := 1 ;"
+                    + System.lineSeparator()
+                    + "   write (x); write (y);"
+                    + System.lineSeparator()
+                    + "end @";
+        }
+        redirectAttributes.addFlashAttribute("sourceText", sourceText);
+
+        return "redirect:/";
+    }
 
     @PostMapping("/")
     public String handleFileUpload(@RequestParam("file") MultipartFile file,
+                                   @RequestParam("sourceText") String sourceText,
                                    RedirectAttributes redirectAttributes) {
+
+        String srcCode;
+        String resultText = "";
+        Path path;
 
         StatD.TID = new ArrayList<>();
         StatD.restArg = new ArrayList<>();
         ArrayFilFiles.filFiles = new ArrayList();
-        ArrayFilFiles.filFiles.add("Исходный код:");
 
-        String srcCode = storageService.store(file);
-
-        Path path = Paths.get(srcCode);
-        try {
-            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-            for (String line : lines) {
-                ArrayFilFiles.filFiles.add(line + System.lineSeparator());
+        if (file.isEmpty()) {
+            srcCode = System.getProperty("java.io.tmpdir") + "\\tmpEdit.txt";
+            path = Paths.get(srcCode);
+            try {
+                Files.writeString(path, sourceText, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                e.printStackTrace();
             }
-        } catch (IOException e) {
-            e.printStackTrace();
+        }
+        else {
+            sourceText = "";
+            srcCode = storageService.store(file);
+            path = Paths.get(srcCode);
+            try {
+                List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+                for (String line : lines) {
+                    sourceText += line + System.lineSeparator();
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
-        ArrayFilFiles.filFiles.add("Результат вычислений:");
         try {
-            System.out.println("Hello");
+            System.out.println("Start");
             System.out.println(srcCode);
             Interpretator I = new Interpretator(srcCode);
             I.interpretation();
-            redirectAttributes.addFlashAttribute("message",
-                    "Вы успешно интерпретировали " + file.getOriginalFilename() + "!");
+            //redirectAttributes.addFlashAttribute("message", "Вы успешно интерпретировали " + file.getOriginalFilename() + "!");
         } catch (Throwable t) {
             t.printStackTrace();
         }
-        redirectAttributes.addFlashAttribute("files", ArrayFilFiles.filFiles);
+        for (Object line : ArrayFilFiles.filFiles) {
+            resultText += line + System.lineSeparator();
+        }
+
+        redirectAttributes.addFlashAttribute("resultText", resultText);
+        redirectAttributes.addFlashAttribute("sourceText", sourceText);
+
         return "redirect:/";
     }
 
