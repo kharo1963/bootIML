@@ -4,18 +4,14 @@ import com.example.bootIML.graphics3D.Cube;
 import com.example.bootIML.graphics3D.Matrix4;
 import com.example.bootIML.graphics3D.Triangle;
 import com.example.bootIML.graphics3D.Vertex;
-import com.example.bootIML.interpretator.StatD;
 import com.example.bootIML.jcodec.javase.api.awt.AWTSequenceEncoder;
+import org.apache.commons.io.FileUtils;
 import org.springframework.stereotype.Service;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 
 @Service
 public class GraphicsService {
@@ -32,23 +28,18 @@ public class GraphicsService {
             0, 0, 1, 0,
             0, 0, 0, 1
     });
-    GraphicsService () {
-        System.out.println("GraphicsService Start");
-        StatD.graphicsService = this;
-    }
 
-    public void createSpinCube (int x, int y, int z, int angularVelocity) {
+    public byte[] createSpinCube (int x, int y, int z, int angularVelocity) {
 
         xyzoTransform = initTransform(heading, pitch, roll);
         transform = xyzoTransform[0]
                 .multiply(xyzoTransform[1])
                 .multiply(xyzoTransform[2]);
-                //.multiply(xyzoTransform[3]);
-        //currentTransform = currentTransform.multiply(xyzoTransform[3]);
 
+        String resultFile = System.getProperty("java.io.tmpdir") + File.separator + "spincubevideo.mp4";
+        byte[] fileContent = new byte[0];
         try {
-            AWTSequenceEncoder encoder = AWTSequenceEncoder.create2997Fps(new File("spincube.mp4"));
-            //BufferedImage img = drawImage(x, y, z, angularVelocity);
+            AWTSequenceEncoder encoder = AWTSequenceEncoder.create2997Fps(new File(resultFile));
             for (int i = 0; i < 100; i++) {
                 if (i % 1 == 0) {
                     transform = transform
@@ -62,27 +53,16 @@ public class GraphicsService {
                 encoder.encodeImage(img);
             }
             encoder.finish();
+            fileContent = FileUtils.readFileToByteArray(new File(resultFile));
         } catch (IOException e) {
             e.printStackTrace();
         }
-        String resultFile = System.getProperty("java.io.tmpdir") + "\\spincubevideo.mp4";
-        resultFile = "src/main/resources/static/spincubevideo.mp4";
-        Path resultPath = Paths.get(resultFile);
-        Path srcPath = Paths.get("spincube.mp4");
-        System.out.println("srcPath " + srcPath);
-        System.out.println("resultPath " + resultPath);
-        try {
-            Files.copy(srcPath, resultPath, StandardCopyOption.REPLACE_EXISTING);
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
+        return fileContent;
     };
 
     BufferedImage drawImage (int pivotx, int pivoty, int pivotz, int angularVelocity) {
 
         BufferedImage img = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        System.out.println("new BufferedImage width = " + width + "height = " + height);
-
         double[] zBuffer = new double[img.getWidth() * img.getHeight()];
         // initialize array with extremely far away depths
         for (int q = 0; q < zBuffer.length; q++) {
@@ -98,11 +78,6 @@ public class GraphicsService {
             Vertex v1 = currentTransform.transform(t.v1);
             Vertex v2 = currentTransform.transform(t.v2);
             Vertex v3 = currentTransform.transform(t.v3);
-
-            System.out.println("---------------------------");
-            System.out.println("v1 v2 v3 x" + v1.x + " " + v2.x + " " + v3.x);
-            System.out.println("v1 v2 v3 y" + v1.y + " " + v2.y + " " + v3.y);
-            System.out.println("v1 v2 v3 z" + v1.z + " " + v2.z + " " + v3.z);
 
             Vertex ab = new Vertex(v2.x - v1.x, v2.y - v1.y, v2.z - v1.z, v2.w - v1.w);
             Vertex ac = new Vertex(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z, v3.w - v1.w);
@@ -133,20 +108,12 @@ public class GraphicsService {
             v3.x += viewportWidth / 2;
             v3.y += viewportHeight / 2;
 
-            System.out.println("");
-            System.out.println("v1 v2 v3 x" + v1.x + " " + v2.x + " " + v3.x);
-            System.out.println("v1 v2 v3 y" + v1.y + " " + v2.y + " " + v3.y);
-            System.out.println("v1 v2 v3 z" + v1.z + " " + v2.z + " " + v3.z);
-
-
             int minX = (int) Math.max(0, Math.ceil(Math.min(v1.x, Math.min(v2.x, v3.x))));
             int maxX = (int) Math.min(img.getWidth() - 1, Math.floor(Math.max(v1.x, Math.max(v2.x, v3.x))));
             int minY = (int) Math.max(0, Math.ceil(Math.min(v1.y, Math.min(v2.y, v3.y))));
             int maxY = (int) Math.min(img.getHeight() - 1, Math.floor(Math.max(v1.y, Math.max(v2.y, v3.y))));
 
             double triangleArea = (v1.y - v3.y) * (v2.x - v3.x) + (v2.y - v3.y) * (v3.x - v1.x);
-
-            System.out.println("minY = " + minY + " maxY = " + maxY + "minX = " + minX + " maxX = " + maxX);
 
             for (int y = minY; y <= maxY; y++) {
                 for (int x = minX; x <= maxX; x++) {
@@ -161,15 +128,10 @@ public class GraphicsService {
                             zBuffer[zIndex] = depth;
                         }
                     }
-
-//                    Color myWhite = new Color(255, 255, 255); // Color white
-//                    int rgb = myWhite.getRGB();
-//                    img.setRGB(x, y, rgb);
                 }
             }
 
         }
-
         return img;
     }
 

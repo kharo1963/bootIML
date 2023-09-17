@@ -1,13 +1,16 @@
 package com.example.bootIML.interpretator;
 
-import java.io.RandomAccessFile;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
+@Slf4j
+@Service
 public class Scanner {
-    RandomAccessFile fp;
-    
-    char   c;
-    long pos;
-    
+    String TW[] = { "", "and", "begin", "bool", "do", "else", "end", "if", "false", "int", "not", "or", "program",
+            "read", "then", "true", "var", "while", "write", "get", "spincube"};
+    String TD[] = { "@", ";", ",", ":", ":=", "(", ")", "=", "<", ">", "+", "-", "*", "/", "<=", "!=", ">="};
+
     int look(String buf, String [] list) {
         int i = 0;
         while (i < list.length) {
@@ -17,40 +20,16 @@ public class Scanner {
         }
         return 0;
     }
-    
-    void gc() {
-    	byte   b;
-        String tB;
-        byte[] bytes = new byte[1];
-    	try {
-    		b = fp.readByte();    		
-     		bytes[0] = b;
-     		tB = new String(bytes);
-      		c = tB.charAt(0);
-       	}
-    	catch (Exception e) {
-    		throw new RuntimeException ("can’t readChar from file");
-    	}      		
-    }
-    
-    void ungetc (RandomAccessFile fp) {
-       	try {
-     		fp.seek(fp.getFilePointer() - 1); 		
-    	}	
-    	catch (Exception e) {
-    		throw new RuntimeException ("can’t ungetc to file");
-    	}      	
-    }    
-    
-    int put(String buf) {
+
+    int put(SourceProgram sourceProgram, String buf) {
         int k = 0;
-        for (Ident l : StatD.TID) {
+        for (Ident l : sourceProgram.TID) {
         	if (buf.equals(l.name))
         		return k;
         	++k;
         }
-        StatD.TID.add(new Ident(buf));
-        return StatD.TID.size() - 1;
+        sourceProgram.TID.add(new Ident(buf));
+        return sourceProgram.TID.size() - 1;
     }
     
     TypeOfLex GetTypeOfOrd (int ord) {
@@ -63,130 +42,99 @@ public class Scanner {
 		return TypeOfLex.LEX_NULL;
     }
     
-    String TW[] = { "", "and", "begin", "bool", "do", "else", "end", "if", "false", "int", "not", "or", "program",
-        "read", "then", "true", "var", "while", "write", "get", "spincube"};
-    String TD[] = { "@", ";", ",", ":", ":=", "(", ")", "=", "<", ">", "+", "-", "*", "/", "<=", "!=", ">="};
-   
-    Scanner(String program) {
-    	try {
-    		fp = new RandomAccessFile(program, "r");
-    	}	
-    	catch (Exception e) {
-    		throw new RuntimeException ("can’t open file");
-    	}    
-    }
-
-    void freeResourse () {
-        try {
-            fp.close();
-        }
-        catch (Exception e) {
-            throw new RuntimeException ("can’t close file");
-        }
-    }
-
-    void store_pos() {
-    	try {
-    		pos = fp.getFilePointer();
-    	}	
-    	catch (Exception e) {
-    		throw new RuntimeException ("can’t getFilePointer");
-    	}         
+    int storePos(SourceProgram sourceProgram) {
+        return sourceProgram.getCurrentPos();
     }
     
-    void restore_pos() {
-    	try {
-         fp.seek(pos);
-		}	
-		catch (Exception e) {
-			throw new RuntimeException ("can’t getFilePointer");
-		}           
+    void restorePos(SourceProgram sourceProgram, int savedPos) {
+        sourceProgram.setCurrentPos(savedPos);
     }
     
-    Lex get_lex() {
+    Lex get_lex(SourceProgram sourceProgram) {
         int         d = 1, j;
+        char currentChar;
         String      buf = "";
         StateLex CS = StateLex.H;
         do {
-            gc();
+            currentChar = sourceProgram.getNextChar();
             switch (CS) {
             case H:
-                if (c == ' ' || c == '\n' || c == '\r' || c == '\t');
-                else if (Character.isLetter(c)) {
-                    buf = buf + c;
+                if (currentChar == ' ' || currentChar == '\n' || currentChar == '\r' || currentChar == '\t');
+                else if (Character.isLetter(currentChar)) {
+                    buf = buf + currentChar;
                     CS = StateLex.IDENT;
                 }
-                else if (Character.isDigit(c)) {
-                    d = c - '0';
+                else if (Character.isDigit(currentChar)) {
+                    d = currentChar - '0';
                     CS = StateLex.NUMB;
                 }
-                else if (c == '{') {
+                else if (currentChar == '{') {
                     CS = StateLex.COM;
                 }
-                else if (c == ':' || c == '<' || c == '>') {
-                    buf = buf + c;
+                else if (currentChar == ':' || currentChar == '<' || currentChar == '>') {
+                    buf = buf + currentChar;
                     CS = StateLex.ALE;
                 }
-                else if (c == '@')
+                else if (currentChar == '@')
                     return new Lex(TypeOfLex.LEX_FIN);
-                else if (c == '!') {
-                    buf = buf + c;
+                else if (currentChar == '!') {
+                    buf = buf + currentChar;
                     CS = StateLex.NEQ;
                 }
                 else {
-                    buf = buf + c;                  
+                    buf = buf + currentChar;
                     j = look (buf, TD);                  
                     if (j > 0) {      
                         return new Lex(GetTypeOfOrd(j + TypeOfLex.LEX_FIN.ordinal()), j);
                     }
                     else
-                         throw new RuntimeException (String.valueOf(c));
+                         throw new RuntimeException (String.valueOf(currentChar));
                 }
                 break;
             case IDENT:
-                if (Character.isLetterOrDigit(c)) {
-                    buf = buf + c;
+                if (Character.isLetterOrDigit(currentChar)) {
+                    buf = buf + currentChar;
                 }
                 else {
-                    ungetc(fp);
+                    sourceProgram.unGetChar();
                     j = look(buf, TW);
                     if (j > 0) {
                           return new Lex(GetTypeOfOrd(j), j);
                     }
                     else {
-                        j = put(buf);
+                        j = put(sourceProgram, buf);
                         return new Lex(TypeOfLex.LEX_ID, j);
                     }
                 }
                 break;
             case NUMB:
-                if (Character.isDigit(c)) {
-                    d = d * 10 + (c - '0');
+                if (Character.isDigit(currentChar)) {
+                    d = d * 10 + (currentChar - '0');
                 }
                 else {
-                    ungetc(fp);
+                    sourceProgram.unGetChar();
                     return new Lex(TypeOfLex.LEX_NUM, d);
                 }
                 break;
             case COM:
-                if (c == '}') {
+                if (currentChar == '}') {
                     CS = StateLex.H;
                 }
-                else if (c == '@' || c == '{')
-                	throw new RuntimeException (String.valueOf(c));
+                else if (currentChar == '@' || currentChar == '{')
+                	throw new RuntimeException (String.valueOf(currentChar));
                 break;
             case ALE:
-                if (c == '=') {
-                    buf = buf + c;
+                if (currentChar == '=') {
+                    buf = buf + currentChar;
                 }
                 else {
-                    ungetc(fp);
+                    sourceProgram.unGetChar();
                 }
                 j = look(buf, TD);
                 return new Lex(GetTypeOfOrd(j + TypeOfLex.LEX_FIN.ordinal()), j);
             case NEQ:
-                if (c == '=') {
-                    buf = buf + c;
+                if (currentChar == '=') {
+                    buf = buf + currentChar;
                     j = look(buf, TD);
                     return new Lex(TypeOfLex.LEX_NEQ, j);
                 }
@@ -195,19 +143,20 @@ public class Scanner {
              } //end switch
         } while (true);
     }
-    int getRestArg() {
-        String      buf = "";
+
+    int getRestArg(SourceProgram sourceProgram) {
+        char currentChar;
+        String buf = "";
          do {
-            gc();
-            if (c == ')') {
-                System.out.println("getRestArg");
-                System.out.println(buf);
-                ungetc(fp);
-                StatD.restArg.add(buf);
-                return StatD.restArg.size() - 1;
+            currentChar = sourceProgram.getNextChar();
+            if (currentChar == ')') {
+                log.debug("getRestArg: " + buf);
+                sourceProgram.unGetChar();
+                sourceProgram.restArg.add(buf);
+                return sourceProgram.restArg.size() - 1;
               }
             else {
-                buf = buf + c;
+                buf = buf + currentChar;
             }
         } while (true);
     }

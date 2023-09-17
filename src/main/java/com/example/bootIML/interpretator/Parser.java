@@ -1,374 +1,363 @@
 package com.example.bootIML.interpretator;
 
-import java.util.ArrayDeque;
-import java.util.ArrayList;
-import java.util.Deque;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Service;
 
+@Slf4j
+@Service
+@RequiredArgsConstructor
 public class Parser {
-    int currentLexVal;
-    Lex currentLex;
-    TypeOfLex currentLexType;
-    Scanner scan;
-    Deque<Integer> st_int = new ArrayDeque<>();
-    Deque<TypeOfLex> st_lex = new ArrayDeque<>();
-    public ArrayList<Lex> poliz = new ArrayList<>();
 
-    public Parser(String program) {
-        scan = new Scanner(program);
-    }
+    private final Scanner scanner;
 
-    public void analyze() {
-        getNextLex();
-        parseProgram();
-        checkTypeOfLex(currentLex, TypeOfLex.LEX_FIN);
+    public void analyze(SourceProgram sourceProgram) {
+        getNextLex(sourceProgram);
+        parseProgram(sourceProgram);
+        checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_FIN);
 
-        System.out.println("poliz");
-        for (Lex l : poliz) {
-            System.out.println(l.toString());
-            System.out.println(l.t_lex);
-            System.out.println(l.v_lex);
+        log.debug("sourceProgram.poliz");
+        for (Lex l : sourceProgram.poliz) {
+            log.debug(l.toString());
+            log.debug(l.typeOfLex.toString() + " " + l.valueOfLex);
         }
-        scan.freeResourse();
-
-        System.out.println();
-        System.out.println("Yes!!!");
+        log.info("Parser worked successfully");
     }
 
-    private void parseProgram() {
-        checkTypeOfLex(currentLex, TypeOfLex.LEX_PROGRAM);
-        getNextLex();
-        parseDefinition();
-        checkTypeOfLex(currentLex, TypeOfLex.LEX_SEMICOLON);
-        getNextLex();
-        parseProgramBody();
+    private void parseProgram(SourceProgram sourceProgram) {
+        checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_PROGRAM);
+        getNextLex(sourceProgram);
+        parseDefinition(sourceProgram);
+        checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_SEMICOLON);
+        getNextLex(sourceProgram);
+        parseProgramBody(sourceProgram);
     }
 
-    private void parseDefinition() {
-        checkTypeOfLex(currentLex, TypeOfLex.LEX_VAR);
-        getNextLex();
-        parseDefinitionOneType();
-        while (currentLexType == TypeOfLex.LEX_COMMA) {
-            getNextLex();
-            parseDefinitionOneType();
+    private void parseDefinition(SourceProgram sourceProgram) {
+        checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_VAR);
+        getNextLex(sourceProgram);
+        parseDefinitionOneType(sourceProgram);
+        while (sourceProgram.currentLexType == TypeOfLex.LEX_COMMA) {
+            getNextLex(sourceProgram);
+            parseDefinitionOneType(sourceProgram);
         }
     }
 
-    private void parseDefinitionOneType() {
-        checkTypeOfLex(currentLex, TypeOfLex.LEX_ID);
-        st_int.push(currentLexVal);
-        getNextLex();
-        while (currentLexType == TypeOfLex.LEX_COMMA) {
-            getNextLex();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_ID);
-            st_int.push(currentLexVal);
-            getNextLex();
+    private void parseDefinitionOneType(SourceProgram sourceProgram) {
+        checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_ID);
+        sourceProgram.stackInteger.push(sourceProgram.currentLexVal);
+        getNextLex(sourceProgram);
+        while (sourceProgram.currentLexType == TypeOfLex.LEX_COMMA) {
+            getNextLex(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_ID);
+            sourceProgram.stackInteger.push(sourceProgram.currentLexVal);
+            getNextLex(sourceProgram);
         }
-        checkTypeOfLex(currentLex, TypeOfLex.LEX_COLON);
-        getNextLex();
-        if (currentLexType == TypeOfLex.LEX_INT) {
-            updateTID(TypeOfLex.LEX_INT);
-        } else if (currentLexType == TypeOfLex.LEX_BOOL) {
-            updateTID(TypeOfLex.LEX_BOOL);
+        checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_COLON);
+        getNextLex(sourceProgram);
+        if (sourceProgram.currentLexType == TypeOfLex.LEX_INT) {
+            updateTID(sourceProgram, TypeOfLex.LEX_INT);
+        } else if (sourceProgram.currentLexType == TypeOfLex.LEX_BOOL) {
+            updateTID(sourceProgram, TypeOfLex.LEX_BOOL);
         } else {
-            throw new RuntimeException(currentLex.toString());
+            throw new RuntimeException(sourceProgram.currentLex.toString());
         }
-        getNextLex();
+        getNextLex(sourceProgram);
     }
 
-    private void parseProgramBody() {
-        checkTypeOfLex(currentLex, TypeOfLex.LEX_BEGIN);
-        getNextLex();
-        parseSentences();
-        while (currentLexType == TypeOfLex.LEX_SEMICOLON) {
-            getNextLex();
-            parseSentences();
+    private void parseProgramBody(SourceProgram sourceProgram) {
+        checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_BEGIN);
+        getNextLex(sourceProgram);
+        parseSentences(sourceProgram);
+        while (sourceProgram.currentLexType == TypeOfLex.LEX_SEMICOLON) {
+            getNextLex(sourceProgram);
+            parseSentences(sourceProgram);
         }
-        if (currentLexType == TypeOfLex.LEX_END) {
-            getNextLex();
+        if (sourceProgram.currentLexType == TypeOfLex.LEX_END) {
+            getNextLex(sourceProgram);
         } else {
-            throw new RuntimeException(currentLex.toString());
+            throw new RuntimeException(sourceProgram.currentLex.toString());
         }
     }
 
-    private void parseSentences() {
+    private void parseSentences(SourceProgram sourceProgram) {
         int pl0, pl1, pl2, pl3;
         int idCnt = 0;
         int previousLexVal;
+        int savedPos;
         TypeOfLex previousLexType;
 
-        if (currentLexType == TypeOfLex.LEX_IF) {
-            getNextLex();
-            parseExpression();
-            eqBool();
-            pl2 = poliz.size();
-            poliz.add(new Lex());
-            poliz.add(new Lex(TypeOfLex.POLIZ_FGO));
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_THEN);
-            getNextLex();
-            parseSentences();
-            pl3 = poliz.size();
-            poliz.add(new Lex());
-            poliz.add(new Lex(TypeOfLex.POLIZ_GO));
-            poliz.set(pl2, new Lex(TypeOfLex.POLIZ_LABEL, poliz.size()));
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_ELSE);
-            getNextLex();
-            parseSentences();
-            poliz.set(pl3, new Lex(TypeOfLex.POLIZ_LABEL, poliz.size()));
+        if (sourceProgram.currentLexType == TypeOfLex.LEX_IF) {
+            getNextLex(sourceProgram);
+            parseExpression(sourceProgram);
+            eqBool(sourceProgram);
+            pl2 = sourceProgram.poliz.size();
+            sourceProgram.poliz.add(new Lex());
+            sourceProgram.poliz.add(new Lex(TypeOfLex.POLIZ_FGO));
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_THEN);
+            getNextLex(sourceProgram);
+            parseSentences(sourceProgram);
+            pl3 = sourceProgram.poliz.size();
+            sourceProgram.poliz.add(new Lex());
+            sourceProgram.poliz.add(new Lex(TypeOfLex.POLIZ_GO));
+            sourceProgram.poliz.set(pl2, new Lex(TypeOfLex.POLIZ_LABEL, sourceProgram.poliz.size()));
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_ELSE);
+            getNextLex(sourceProgram);
+            parseSentences(sourceProgram);
+            sourceProgram.poliz.set(pl3, new Lex(TypeOfLex.POLIZ_LABEL, sourceProgram.poliz.size()));
         }//end if
-        else if (currentLexType == TypeOfLex.LEX_WHILE) {
-            pl0 = poliz.size();
-            getNextLex();
-            parseExpression();
-            eqBool();
-            pl1 = poliz.size();
-            poliz.add(new Lex());
-            poliz.add(new Lex(TypeOfLex.POLIZ_FGO));
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_DO);
-            getNextLex();
-            parseSentences();
-            poliz.add(new Lex(TypeOfLex.POLIZ_LABEL, pl0));
-            poliz.add(new Lex(TypeOfLex.POLIZ_GO));
-            poliz.set(pl1, new Lex(TypeOfLex.POLIZ_LABEL, poliz.size()));
+        else if (sourceProgram.currentLexType == TypeOfLex.LEX_WHILE) {
+            pl0 = sourceProgram.poliz.size();
+            getNextLex(sourceProgram);
+            parseExpression(sourceProgram);
+            eqBool(sourceProgram);
+            pl1 = sourceProgram.poliz.size();
+            sourceProgram.poliz.add(new Lex());
+            sourceProgram.poliz.add(new Lex(TypeOfLex.POLIZ_FGO));
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_DO);
+            getNextLex(sourceProgram);
+            parseSentences(sourceProgram);
+            sourceProgram.poliz.add(new Lex(TypeOfLex.POLIZ_LABEL, pl0));
+            sourceProgram.poliz.add(new Lex(TypeOfLex.POLIZ_GO));
+            sourceProgram.poliz.set(pl1, new Lex(TypeOfLex.POLIZ_LABEL, sourceProgram.poliz.size()));
         }//end while
-        else if (currentLexType == TypeOfLex.LEX_READ) {
-            getNextLex();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_LPAREN);
-            getNextLex();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_ID);
-            checkIdInRead();
-            poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, currentLexVal));
-            getNextLex();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_RPAREN);
-            getNextLex();
-            poliz.add(new Lex(TypeOfLex.LEX_READ));
+        else if (sourceProgram.currentLexType == TypeOfLex.LEX_READ) {
+            getNextLex(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_LPAREN);
+            getNextLex(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_ID);
+            checkIdInRead(sourceProgram);
+            sourceProgram.poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, sourceProgram.currentLexVal));
+            getNextLex(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_RPAREN);
+            getNextLex(sourceProgram);
+            sourceProgram.poliz.add(new Lex(TypeOfLex.LEX_READ));
         }//end read
-        else if (currentLexType == TypeOfLex.LEX_GET) {
-            getNextLex();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_LPAREN);
-            getNextLex();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_ID);
-            checkIdInRead();
-            poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, currentLexVal));
-            getNextLex();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_COMMA);
-            currentLexVal = glRestArg();
-            poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, currentLexVal));
-            getNextLex();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_RPAREN);
-            getNextLex();
-            poliz.add(new Lex(TypeOfLex.LEX_GET));
+        else if (sourceProgram.currentLexType == TypeOfLex.LEX_GET) {
+            getNextLex(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_LPAREN);
+            getNextLex(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_ID);
+            checkIdInRead(sourceProgram);
+            sourceProgram.poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, sourceProgram.currentLexVal));
+            getNextLex(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_COMMA);
+            sourceProgram.currentLexVal = glRestArg(sourceProgram);
+            sourceProgram.poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, sourceProgram.currentLexVal));
+            getNextLex(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_RPAREN);
+            getNextLex(sourceProgram);
+            sourceProgram.poliz.add(new Lex(TypeOfLex.LEX_GET));
         }//end get
-        else if (currentLexType == TypeOfLex.LEX_SPINCUBE) {
-            getNextLex();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_LPAREN);
-            getNextLex();
-            parseExpression();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_COMMA);
-            getNextLex();
-            parseExpression();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_COMMA);
-            getNextLex();
-            parseExpression();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_COMMA);
-            getNextLex();
-            parseExpression();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_RPAREN);
-            getNextLex();
-            poliz.add(new Lex(TypeOfLex.LEX_SPINCUBE));
+        else if (sourceProgram.currentLexType == TypeOfLex.LEX_SPINCUBE) {
+            getNextLex(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_LPAREN);
+            getNextLex(sourceProgram);
+            parseExpression(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_COMMA);
+            getNextLex(sourceProgram);
+            parseExpression(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_COMMA);
+            getNextLex(sourceProgram);
+            parseExpression(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_COMMA);
+            getNextLex(sourceProgram);
+            parseExpression(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_RPAREN);
+            getNextLex(sourceProgram);
+            sourceProgram.poliz.add(new Lex(TypeOfLex.LEX_SPINCUBE));
         }//end spincube
-        else if (currentLexType == TypeOfLex.LEX_WRITE) {
-            getNextLex();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_LPAREN);
-            getNextLex();
-            parseExpression();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_RPAREN);
-            getNextLex();
-            poliz.add(new Lex(TypeOfLex.LEX_WRITE));
+        else if (sourceProgram.currentLexType == TypeOfLex.LEX_WRITE) {
+            getNextLex(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_LPAREN);
+            getNextLex(sourceProgram);
+            parseExpression(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_RPAREN);
+            getNextLex(sourceProgram);
+            sourceProgram.poliz.add(new Lex(TypeOfLex.LEX_WRITE));
         }//end write
-        else if (currentLexType == TypeOfLex.LEX_ID) {
-            checkId();
-            poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, currentLexVal));
-            getNextLex();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_ASSIGN);
+        else if (sourceProgram.currentLexType == TypeOfLex.LEX_ID) {
+            checkId(sourceProgram);
+            sourceProgram.poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, sourceProgram.currentLexVal));
+            getNextLex(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_ASSIGN);
             ++idCnt;
-            getNextLex();
-            while (currentLexType == TypeOfLex.LEX_ID) {
-                checkId();
-                scan.store_pos();
-                previousLexVal = currentLexVal;
-                previousLexType = currentLexType;
-                getNextLex();
-                if (currentLexType == TypeOfLex.LEX_ASSIGN) {
-                    eqType();
-                    if (StatD.TID.get(previousLexVal).get_declare())
-                        st_lex.push(StatD.TID.get(previousLexVal).get_type());
+            getNextLex(sourceProgram);
+            while (sourceProgram.currentLexType == TypeOfLex.LEX_ID) {
+                checkId(sourceProgram);
+                savedPos = scanner.storePos(sourceProgram);
+                previousLexVal = sourceProgram.currentLexVal;
+                previousLexType = sourceProgram.currentLexType;
+                getNextLex(sourceProgram);
+                if (sourceProgram.currentLexType == TypeOfLex.LEX_ASSIGN) {
+                    eqType(sourceProgram);
+                    if (sourceProgram.TID.get(previousLexVal).get_declare())
+                        sourceProgram.stackTypeOfLex.push(sourceProgram.TID.get(previousLexVal).get_type());
                     else
                         throw new RuntimeException("not declared");
-                    poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, previousLexVal));
-                    getNextLex();
+                    sourceProgram.poliz.add(new Lex(TypeOfLex.POLIZ_ADDRESS, previousLexVal));
+                    getNextLex(sourceProgram);
                     ++idCnt;
                     continue;
                 }
-                scan.restore_pos();
-                currentLexVal = previousLexVal;
-                currentLexType = previousLexType;
+                scanner.restorePos(sourceProgram, savedPos);
+                sourceProgram.currentLexVal = previousLexVal;
+                sourceProgram.currentLexType = previousLexType;
                 break;
             }
-            parseExpression();
-            eqType();
+            parseExpression(sourceProgram);
+            eqType(sourceProgram);
             while (idCnt > 0) {
                 --idCnt;
-                poliz.add(new Lex(TypeOfLex.LEX_ASSIGN));
+                sourceProgram.poliz.add(new Lex(TypeOfLex.LEX_ASSIGN));
             }
-            if (currentLexType == TypeOfLex.LEX_SEMICOLON) {
-                poliz.add(new Lex(TypeOfLex.LEX_SEMICOLON));
+            if (sourceProgram.currentLexType == TypeOfLex.LEX_SEMICOLON) {
+                sourceProgram.poliz.add(new Lex(TypeOfLex.LEX_SEMICOLON));
             }
         }//assign-end
         else
-            parseProgramBody();
+            parseProgramBody(sourceProgram);
     }
 
-    private void parseExpression() {
-        parseExpressionPart();
-        if (currentLexType == TypeOfLex.LEX_EQ || currentLexType == TypeOfLex.LEX_LSS || currentLexType == TypeOfLex.LEX_GTR ||
-                currentLexType == TypeOfLex.LEX_LEQ || currentLexType == TypeOfLex.LEX_GEQ || currentLexType == TypeOfLex.LEX_NEQ) {
-            st_lex.push(currentLexType);
-            getNextLex();
-            parseExpressionPart();
-            checkOp();
+    private void parseExpression(SourceProgram sourceProgram) {
+        parseExpressionPart(sourceProgram);
+        if (sourceProgram.currentLexType == TypeOfLex.LEX_EQ || sourceProgram.currentLexType == TypeOfLex.LEX_LSS || sourceProgram.currentLexType == TypeOfLex.LEX_GTR ||
+                sourceProgram.currentLexType == TypeOfLex.LEX_LEQ || sourceProgram.currentLexType == TypeOfLex.LEX_GEQ || sourceProgram.currentLexType == TypeOfLex.LEX_NEQ) {
+            sourceProgram.stackTypeOfLex.push(sourceProgram.currentLexType);
+            getNextLex(sourceProgram);
+            parseExpressionPart(sourceProgram);
+            checkOp(sourceProgram);
         }
     }
 
-    private void parseExpressionPart() {
-        parseTerm();
-        while (currentLexType == TypeOfLex.LEX_PLUS || currentLexType == TypeOfLex.LEX_MINUS || currentLexType == TypeOfLex.LEX_OR) {
-            st_lex.push(currentLexType);
-            getNextLex();
-            parseTerm();
-            checkOp();
+    private void parseExpressionPart(SourceProgram sourceProgram) {
+        parseTerm(sourceProgram);
+        while (sourceProgram.currentLexType == TypeOfLex.LEX_PLUS || sourceProgram.currentLexType == TypeOfLex.LEX_MINUS || sourceProgram.currentLexType == TypeOfLex.LEX_OR) {
+            sourceProgram.stackTypeOfLex.push(sourceProgram.currentLexType);
+            getNextLex(sourceProgram);
+            parseTerm(sourceProgram);
+            checkOp(sourceProgram);
         }
     }
 
-    private void parseTerm() {
-        parseFactor();
-        while (currentLexType == TypeOfLex.LEX_TIMES || currentLexType == TypeOfLex.LEX_SLASH || currentLexType == TypeOfLex.LEX_AND) {
-            st_lex.push(currentLexType);
-            getNextLex();
-            parseFactor();
-            checkOp();
+    private void parseTerm(SourceProgram sourceProgram) {
+        parseFactor(sourceProgram);
+        while (sourceProgram.currentLexType == TypeOfLex.LEX_TIMES || sourceProgram.currentLexType == TypeOfLex.LEX_SLASH || sourceProgram.currentLexType == TypeOfLex.LEX_AND) {
+            sourceProgram.stackTypeOfLex.push(sourceProgram.currentLexType);
+            getNextLex(sourceProgram);
+            parseFactor(sourceProgram);
+            checkOp(sourceProgram);
         }
     }
 
-    private void parseFactor() {
-        if (currentLexType == TypeOfLex.LEX_ID) {
-            checkId();
-            poliz.add(new Lex(TypeOfLex.LEX_ID, currentLexVal));
-            getNextLex();
-        } else if (currentLexType == TypeOfLex.LEX_NUM) {
-            st_lex.push(TypeOfLex.LEX_INT);
-            poliz.add(currentLex);
-            getNextLex();
-        } else if (currentLexType == TypeOfLex.LEX_TRUE) {
-            st_lex.push(TypeOfLex.LEX_BOOL);
-            poliz.add(new Lex(TypeOfLex.LEX_TRUE, 1));
-            getNextLex();
-        } else if (currentLexType == TypeOfLex.LEX_FALSE) {
-            st_lex.push(TypeOfLex.LEX_BOOL);
-            poliz.add(new Lex(TypeOfLex.LEX_FALSE, 0));
-            getNextLex();
-        } else if (currentLexType == TypeOfLex.LEX_NOT) {
-            getNextLex();
-            parseFactor();
-            checkNot();
-        } else if (currentLexType == TypeOfLex.LEX_LPAREN) {
-            getNextLex();
-            parseExpression();
-            checkTypeOfLex(currentLex, TypeOfLex.LEX_RPAREN);
-            getNextLex();
+    private void parseFactor(SourceProgram sourceProgram) {
+        if (sourceProgram.currentLexType == TypeOfLex.LEX_ID) {
+            checkId(sourceProgram);
+            sourceProgram.poliz.add(new Lex(TypeOfLex.LEX_ID, sourceProgram.currentLexVal));
+            getNextLex(sourceProgram);
+        } else if (sourceProgram.currentLexType == TypeOfLex.LEX_NUM) {
+            sourceProgram.stackTypeOfLex.push(TypeOfLex.LEX_INT);
+            sourceProgram.poliz.add(sourceProgram.currentLex);
+            getNextLex(sourceProgram);
+        } else if (sourceProgram.currentLexType == TypeOfLex.LEX_TRUE) {
+            sourceProgram.stackTypeOfLex.push(TypeOfLex.LEX_BOOL);
+            sourceProgram.poliz.add(new Lex(TypeOfLex.LEX_TRUE, 1));
+            getNextLex(sourceProgram);
+        } else if (sourceProgram.currentLexType == TypeOfLex.LEX_FALSE) {
+            sourceProgram.stackTypeOfLex.push(TypeOfLex.LEX_BOOL);
+            sourceProgram.poliz.add(new Lex(TypeOfLex.LEX_FALSE, 0));
+            getNextLex(sourceProgram);
+        } else if (sourceProgram.currentLexType == TypeOfLex.LEX_NOT) {
+            getNextLex(sourceProgram);
+            parseFactor(sourceProgram);
+            checkNot(sourceProgram);
+        } else if (sourceProgram.currentLexType == TypeOfLex.LEX_LPAREN) {
+            getNextLex(sourceProgram);
+            parseExpression(sourceProgram);
+            checkTypeOfLex(sourceProgram.currentLex, TypeOfLex.LEX_RPAREN);
+            getNextLex(sourceProgram);
         } else
-            throw new RuntimeException(currentLex.toString());
+            throw new RuntimeException(sourceProgram.currentLex.toString());
     }
 
-    private void updateTID(TypeOfLex type) {
+    private void updateTID(SourceProgram sourceProgram,TypeOfLex type) {
         int i;
-        while (st_int.size() > 0) {
-            i = StatD.from_st_i(st_int);
-            if (StatD.TID.get(i).get_declare())
+        while (sourceProgram.stackInteger.size() > 0) {
+            i = sourceProgram.stackInteger.remove();
+            if (sourceProgram.TID.get(i).get_declare())
                 throw new RuntimeException("twice");
             else {
-                StatD.TID.get(i).put_declare();
-                StatD.TID.get(i).put_type(type);
+                sourceProgram.TID.get(i).put_declare();
+                sourceProgram.TID.get(i).put_type(type);
             }
         }
     }
 
-    private void checkId() {
-        if (StatD.TID.get(currentLexVal).get_declare())
-            st_lex.push(StatD.TID.get(currentLexVal).get_type());
+    private void checkId(SourceProgram sourceProgram) {
+        if (sourceProgram.TID.get(sourceProgram.currentLexVal).get_declare())
+            sourceProgram.stackTypeOfLex.push(sourceProgram.TID.get(sourceProgram.currentLexVal).get_type());
         else
             throw new RuntimeException("not declared");
     }
 
-    private void checkOp() {
+    private void checkOp(SourceProgram sourceProgram) {
         TypeOfLex t1, t2, op, t = TypeOfLex.LEX_INT, r = TypeOfLex.LEX_BOOL;
 
-        t2 = StatD.from_st_t(st_lex);
-        op = StatD.from_st_t(st_lex);
-        t1 = StatD.from_st_t(st_lex);
+        t2 = sourceProgram.stackTypeOfLex.remove();
+        op = sourceProgram.stackTypeOfLex.remove();
+        t1 = sourceProgram.stackTypeOfLex.remove();
 
         if (op == TypeOfLex.LEX_PLUS || op == TypeOfLex.LEX_MINUS || op == TypeOfLex.LEX_TIMES || op == TypeOfLex.LEX_SLASH)
             r = TypeOfLex.LEX_INT;
         if (op == TypeOfLex.LEX_OR || op == TypeOfLex.LEX_AND)
             t = TypeOfLex.LEX_BOOL;
         if (t1 == t2 && t1 == t)
-            st_lex.push(r);
+            sourceProgram.stackTypeOfLex.push(r);
         else
             throw new RuntimeException("wrong types are in operation");
-        poliz.add(new Lex(op));
+        sourceProgram.poliz.add(new Lex(op));
     }
 
-    private void checkNot() {
-        if (st_lex.peek() != TypeOfLex.LEX_BOOL)
+    private void checkNot(SourceProgram sourceProgram) {
+        if (sourceProgram.stackTypeOfLex.peek() != TypeOfLex.LEX_BOOL)
             throw new RuntimeException("wrong type is in not");
         else
-            poliz.add(new Lex(TypeOfLex.LEX_NOT));
+            sourceProgram.poliz.add(new Lex(TypeOfLex.LEX_NOT));
     }
 
-    private void eqType() {
-        TypeOfLex t;
-        t = StatD.from_st_t(st_lex);
-        if (t != st_lex.peek())
+    private void eqType(SourceProgram sourceProgram) {
+        TypeOfLex typeOfLex;
+        typeOfLex = sourceProgram.stackTypeOfLex.remove();
+        if (typeOfLex != sourceProgram.stackTypeOfLex.peek())
             throw new RuntimeException("wrong types are in :=");
-        st_lex.pop();
+        sourceProgram.stackTypeOfLex.pop();
     }
 
-    private void eqBool() {
-        if (st_lex.peek() != TypeOfLex.LEX_BOOL)
+    private void eqBool(SourceProgram sourceProgram) {
+        if (sourceProgram.stackTypeOfLex.peek() != TypeOfLex.LEX_BOOL)
             throw new RuntimeException("expression is not boolean");
-        st_lex.pop();
+        sourceProgram.stackTypeOfLex.pop();
     }
 
-    private void checkIdInRead() {
-        if (!StatD.TID.get(currentLexVal).get_declare())
+    private void checkIdInRead(SourceProgram sourceProgram) {
+        if (!sourceProgram.TID.get(sourceProgram.currentLexVal).get_declare())
             throw new RuntimeException("not declared");
     }
 
-    private void getNextLex() {
-        currentLex = scan.get_lex();
-        currentLexType = currentLex.get_type();
-        currentLexVal = currentLex.get_value();
-        System.out.println("gl");
-        System.out.println(currentLexType);
-        System.out.println(currentLexVal);
+    private void getNextLex(SourceProgram sourceProgram) {
+        sourceProgram.currentLex = scanner.get_lex(sourceProgram);
+        sourceProgram.currentLexType = sourceProgram.currentLex.getTypeOfLex();
+        sourceProgram.currentLexVal = sourceProgram.currentLex.getValueOfLex();
+        log.debug("gl " + sourceProgram.currentLexType + " " + sourceProgram.currentLexVal);
     }
 
-    private int glRestArg() {
-        int restArg = scan.getRestArg();
+    private int glRestArg(SourceProgram sourceProgram) {
+        int restArg = scanner.getRestArg(sourceProgram);
         return restArg;
     }
 
     private void checkTypeOfLex(Lex lex, TypeOfLex typeOfLex) {
-        if (lex.get_type() != typeOfLex) {
+        if (lex.getTypeOfLex() != typeOfLex) {
             throw new RuntimeException(lex.toString());
         }
     }
