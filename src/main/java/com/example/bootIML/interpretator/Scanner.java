@@ -64,7 +64,7 @@ public class Scanner {
     }
     
     String TW[] = { "", "and", "begin", "bool", "do", "else", "end", "if", "false", "int", "not", "or", "program",
-        "read", "then", "true", "var", "while", "write", "get"};
+        "read", "then", "true", "var", "while", "write", "get", "spincube"};
     String TD[] = { "@", ";", ",", ":", ":=", "(", ")", "=", "<", ">", "+", "-", "*", "/", "<=", "!=", ">="};
    
     Scanner(String program) {

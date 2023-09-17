@@ -112,6 +112,17 @@ public class Executer {
                     StatD.TID.get(i).put_assign();
                     break;
 
+                case LEX_SPINCUBE:
+                    int[] spinCubeParams = new int[4];
+                    spinCubeParams[3] = StatD.from_st_i(args);
+                    spinCubeParams[2] = StatD.from_st_i(args);
+                    spinCubeParams[1] = StatD.from_st_i(args);
+                    spinCubeParams[0] = StatD.from_st_i(args);
+                    System.out.println("LEX_SPINCUBE" + " " + spinCubeParams[0] + " " + spinCubeParams[1] + " " + spinCubeParams[2] + " " + spinCubeParams[3]);
+                    ArrayFilFiles.filFiles.add("spinCube");
+                    StatD.graphicsService.createSpinCube(spinCubeParams[0], spinCubeParams[1], spinCubeParams[2], spinCubeParams[3]);
+                    break;
+
                 case LEX_PLUS:
                     i = StatD.from_st_i(args);
                     j = StatD.from_st_i(args);

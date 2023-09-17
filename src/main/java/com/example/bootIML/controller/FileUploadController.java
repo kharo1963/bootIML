@@ -1,26 +1,26 @@
 package com.example.bootIML.controller;
 
+import java.beans.Encoder;
+import java.io.File;
 import java.io.IOException;
+import java.net.URI;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
-import com.example.bootIML.service.StorageProperties;
+import org.apache.commons.io.FileUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.core.io.FileSystemResource;
 import org.springframework.core.io.Resource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.ExceptionHandler;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
@@ -41,30 +41,9 @@ public class FileUploadController {
         this.storageService = storageService;
     }
 
+    @CrossOrigin
     @GetMapping("/")
     public String listUploadedFiles(Model model) throws IOException {
-
-        String sourceText = "";
-
-        Path path = Paths.get(System.getProperty("user.dir") + "\\ext-gcd.txt");
-        try {
-            List<String> lines = Files.readAllLines(path, StandardCharsets.UTF_8);
-            for (String line : lines) {
-                sourceText += line + System.lineSeparator();            }
-        } catch (IOException e) {
-            e.printStackTrace();
-            sourceText = "program"
-                       + System.lineSeparator()
-                       + "   var x,y : int ;"
-                       + System.lineSeparator()
-                       + "begin"
-                       + System.lineSeparator()
-                       + "   x := y := 1 ;"
-                       + System.lineSeparator()
-                       + "   write (x); write (y);"
-                       + System.lineSeparator()
-                       + "end @";
-        }
 
         return "uploadForm";
     }
@@ -76,8 +55,31 @@ public class FileUploadController {
                      + "iVBORw0KGgoAAAANSUhEUgAAAAUAAAAFCAYAAACNbyblAAAAHElEQVQI12P4"
                      + "//8/w38GIAXDIBKE0DHxgljNBAAO9TXL0Y4OHwAAAABJRU5ErkJggg==";
         model.addAttribute("image", image);
+        //model.addAttribute("resultVideo", System.getProperty("java.io.tmpdir") + "spincubevideo.mp4");
+
+        URI resultURI = Path.of(System.getProperty("java.io.tmpdir") + "spincubevideo.mp4").toUri();
+        //String stringURL = resultURI.toURL().toString();
+        String stringURL = resultURI.toString();
+        model.addAttribute("resultVideo", resultURI);
+
+        byte[] fileContent = FileUtils.readFileToByteArray(new File(System.getProperty("java.io.tmpdir") + "spincubevideo.mp4"));
+        String resultFile64 = Base64.getEncoder().encodeToString(fileContent);
+
+        String resultVideo64 = "data:video/mp4;base64,"
+                             + resultFile64;
+        model.addAttribute("resultVideo64", resultVideo64);
 
         return "resultForm";
+
+        //https://www.baeldung.com/java-base64-encode-and-decode
+        //https://base64.guru/developers/html/video
+        //https://paulcwarren.github.io/spring-content/
+        //https://stackoverflow.com/questions/49608146/spring-boot-html-5-video-streaming?rq=3
+        //https://habr.com/ru/articles/565056/ Реактивное программирование со Spring, часть 3 WebFlux
+        //https://stackoverflow.com/questions/49608146/spring-boot-html-5-video-streaming
+        //https://stackoverflow.com/questions/20634603/how-do-i-return-a-video-with-spring-mvc-so-that-it-can-be-navigated-using-the-ht
+        //File MP4_FILE = new File("/home/ego/bbb_sunflower_1080p_60fps_normal.mp4");
+        //return new FileSystemResource(System.getProperty("java.io.tmpdir") + "spincubevideo.mp4");
     }
 
     @GetMapping("/files/{filename:.+}")
@@ -161,7 +163,13 @@ public class FileUploadController {
         redirectAttributes.addFlashAttribute("resultText", resultText);
         redirectAttributes.addFlashAttribute("sourceText", sourceText);
 
+        System.out.println("resultText.indexOf(spinCube)" + resultText.indexOf("spinCube"));
+
+        if (resultText.indexOf("spinCube") >= 0) {
+            return "redirect:/result";
+        }
         return "redirect:/";
+
     }
 
     @ExceptionHandler(StorageFileNotFoundException.class)

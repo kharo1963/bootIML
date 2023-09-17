@@ -9,9 +9,7 @@ public class Parser {
     Lex currentLex;
     TypeOfLex currentLexType;
     Scanner scan;
-    //Stack<Integer> st_int = new Stack<Integer>();
     Deque<Integer> st_int = new ArrayDeque<>();
-    //Stack<TypeOfLex> st_lex = new Stack<TypeOfLex>();
     Deque<TypeOfLex> st_lex = new ArrayDeque<>();
     public ArrayList<Lex> poliz = new ArrayList<>();
 
@@ -23,7 +21,7 @@ public class Parser {
         getNextLex();
         parseProgram();
         checkTypeOfLex(currentLex, TypeOfLex.LEX_FIN);
-        /* */
+
         System.out.println("poliz");
         for (Lex l : poliz) {
             System.out.println(l.toString());
@@ -31,7 +29,7 @@ public class Parser {
             System.out.println(l.v_lex);
         }
         scan.freeResourse();
-        /* */
+
         System.out.println();
         System.out.println("Yes!!!");
     }
@@ -160,6 +158,24 @@ public class Parser {
             getNextLex();
             poliz.add(new Lex(TypeOfLex.LEX_GET));
         }//end get
+        else if (currentLexType == TypeOfLex.LEX_SPINCUBE) {
+            getNextLex();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_LPAREN);
+            getNextLex();
+            parseExpression();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_COMMA);
+            getNextLex();
+            parseExpression();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_COMMA);
+            getNextLex();
+            parseExpression();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_COMMA);
+            getNextLex();
+            parseExpression();
+            checkTypeOfLex(currentLex, TypeOfLex.LEX_RPAREN);
+            getNextLex();
+            poliz.add(new Lex(TypeOfLex.LEX_SPINCUBE));
+        }//end spincube
         else if (currentLexType == TypeOfLex.LEX_WRITE) {
             getNextLex();
             checkTypeOfLex(currentLex, TypeOfLex.LEX_LPAREN);
