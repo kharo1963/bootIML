@@ -16,7 +16,7 @@ import org.springframework.web.bind.annotation.*;
 public class InterpretatorController {
     private final InterpretatorService interpretatorService;
 
-    @CrossOrigin(origins = "http://localhost:4200")
+    @CrossOrigin
     @PostMapping("/")
     public ResponseEntity<InterpretResponse> interpret(@RequestBody InterpretRequest interpretRequest){
         log.info("interpretRequest {}", interpretRequest.getSourceText());
