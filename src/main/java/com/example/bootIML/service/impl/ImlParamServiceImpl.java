@@ -1,7 +1,8 @@
-package com.example.bootIML.service;
+package com.example.bootIML.service.impl;
 
 import com.example.bootIML.model.ImlParam;
 import com.example.bootIML.repository.ImlParamRepository;
+import com.example.bootIML.service.ImlParamService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Example;
 import org.springframework.data.domain.ExampleMatcher;

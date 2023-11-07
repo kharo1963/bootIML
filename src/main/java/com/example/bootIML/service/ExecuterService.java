@@ -2,6 +2,7 @@ package com.example.bootIML.service;
 
 //import com.example.bootIML.kafka.Consumer;
 //import com.example.bootIML.kafka.Producer;
+import com.example.bootIML.service.impl.ImlParamServiceImpl;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
