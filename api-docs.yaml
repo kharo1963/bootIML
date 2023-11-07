@@ -1,0 +1,70 @@
+openapi: 3.0.1
+info:
+  title: 'OpenApi specification '
+  description: OpenApi documentation for Spring Security
+  termsOfService: Terms of service
+  license:
+    name: Licence name
+    url: https://some-url.com
+  version: "1.0"
+servers:
+- url: http://localhost:8080
+  description: Local ENV
+paths:
+  /:
+    post:
+      tags:
+      - interpretator-controller
+      operationId: interpret
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/InterpretRequest'
+        required: true
+      responses:
+        "400":
+          description: Bad Request
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "409":
+          description: Conflict
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "500":
+          description: Internal Server Error
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        "200":
+          description: OK
+          content:
+            '*/*':
+              schema:
+                $ref: '#/components/schemas/InterpretResponse'
+components:
+  schemas:
+    ErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        description:
+          type: string
+    InterpretRequest:
+      type: object
+      properties:
+        sourceText:
+          type: string
+    InterpretResponse:
+      type: object
+      properties:
+        resultText:
+          type: string
+        resultVideo64:
+          type: string
