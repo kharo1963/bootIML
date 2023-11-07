@@ -27,8 +27,6 @@ public class InterpretatorController {
         if (sourceProgram.resultText.indexOf("spinCube") >= 0) {
             String resultFile64  = Base64.getEncoder().encodeToString(sourceProgram.fileContent);
             resultVideo64 = "data:video/mp4;base64," + resultFile64;
-            //model.addAttribute("resultVideo64", resultVideo64);
-            //model.addAttribute("videoOperator", "Результат выполнения оператора spinCube");
         }
         return ResponseEntity.ok(new InterpretResponse (sourceProgram.resultText, resultVideo64));
     }
