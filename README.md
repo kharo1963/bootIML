@@ -23,7 +23,8 @@
 
 **Бэкенд**:
 * ссылка на исходники https://github.com/kharo1963/bootIML
-* ссылка для выполения запросов https://bootiml-production.up.railway.app/
+* документация API: https://github.com/kharo1963/bootIML/blob/master/api-docs.yaml
+* ссылка для выполения запросов https://bbaqndbutut7tp2bjrh3.containers.yandexcloud.net/
 
 **Фронтенд**:
 * ссылка на исходники https://github.com/kharo1963/ycl-angular
