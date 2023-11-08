@@ -5,7 +5,7 @@
 program 
    var m,n,a,b,u1,v1,u2,v2,tmp,q,r,d,u,v : int;  
    begin
-      {Получение значений m и n из таблицы iml_param (PostgreSQL):}
+      {Получение значений m и n из таблицы iml_param:}
       get (m,ext-gcd/m); write (m); get (n,ext-gcd/n); write (n);
       {Вычисления:}
       a := m;  b := n; u1 := v2 := 1; v1 := u2 := 0;
